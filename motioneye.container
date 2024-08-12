@@ -1,0 +1,19 @@
+[Unit]
+Description=The MotionEye Container
+After=local-fs.target
+
+[Container]
+Image=quay.io/jtligon/motioneye:main-amd64
+Volume=/motioneye/data:/etc/motioneye:Z
+Volume=/data:/var/lib/motioneye:Z
+AddDevice=/dev/video0
+PublishPort=8765:8765
+Timezone=local
+HostName=Motioneye
+
+[Service]
+Restart=always
+
+[Install]
+#start by default on Boot
+WantedBy=multiuser.target default.target
