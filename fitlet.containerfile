@@ -4,6 +4,8 @@ RUN dnf install -y cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpi
 
 RUN systemctl enable podman-auto-update.timer cockpit.socket
 
+COPY mycustom-user.conf /usr/lib/sysusers.d
+
 RUN mkdir -p /motioneye/config /motioneye/data /data
 
 COPY ./motioneye.container /etc/containers/systemd/motioneye.container
