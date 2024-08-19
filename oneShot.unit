@@ -1,0 +1,10 @@
+[Unit]
+Description=Import an ssh key from Jeff
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "ssh-import-id jtligon"
+RemainAfterExit=yes
+
+[Install]
+WantedBy=network.target
