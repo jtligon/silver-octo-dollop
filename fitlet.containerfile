@@ -7,6 +7,7 @@ RUN dnf install -y cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpi
 # COPY ./oneShot.unit /etc/systemd/system/ssh-import-id.service
 # RUN systemctl enable ssh-import-id.service
 
+ADD wheel-passwordless-sudo /etc/sudoers.d/wheel-passwordless-sudo
 
 COPY mycustom-user.conf /usr/lib/sysusers.d
 
