@@ -3,7 +3,7 @@ Description=Import an ssh key from Jeff
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -c "ssh-import-id jtligon"
+ExecStart=/bin/bash -c "wget -O - https://github.com/jtligon.keys >> /var/home/jtligon/.ssh/authorized_keys"
 RemainAfterExit=yes
 
 [Install]
