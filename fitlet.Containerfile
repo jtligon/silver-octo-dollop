@@ -1,4 +1,4 @@
-FROM gitlab.com/fedora/bootc/base-images/fedora-bootc-minimal
+FROM gitlab.com/fedora/bootc/base-images/fedora-bootc-minimal:40-amd64
 
 RUN dnf install -y cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws cockpit-machines cockpit-selinux bash-completion git wget && dnf clean all
 
