@@ -8,4 +8,4 @@ RUN mkdir -p /motioneye/config /motioneye/data /data
 
 RUN systemctl enable podman-auto-update.timer cockpit.socket
 
-//COPY ./motioneye.container /etc/containers/systemd/motioneye.container
+COPY ./motioneye.container /etc/containers/systemd/motioneye.container
