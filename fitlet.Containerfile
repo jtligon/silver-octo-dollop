@@ -1,4 +1,4 @@
-FROM quay.io/fedora/fedora-bootc:40-x86_64
+FROM quay.io/fedora/fedora-bootc:41-x86_64
 
 RUN dnf install -y cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws wpa_supplicant cockpit-selinux cockpit-pcp iwlwifi-mvm-firmware openssl  bash-completion git wget && dnf clean all
 
