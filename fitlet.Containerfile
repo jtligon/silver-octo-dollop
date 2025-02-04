@@ -1,6 +1,6 @@
 FROM quay.io/fedora/fedora-bootc:41-x86_64
 
-RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws wpa_supplicant cockpit-selinux cockpit-pcp iwlwifi-mvm-firmware openssl  bash-completion git wget && dnf clean all
+RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws wpa_supplicant cockpit-selinux iwlwifi-mvm-firmware git wget && dnf clean all
 
 ADD wheel-passwordless-sudo /etc/sudoers.d/wheel-passwordless-sudo
 
