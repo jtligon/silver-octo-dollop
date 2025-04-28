@@ -3,7 +3,7 @@ Description=The MotionEye Container
 After=local-fs.target
 
 [Container]
-Image=quay.io/jtligon/motioneye:main-amd64
+Image=quay.io/jtligon/motioneye
 Volume=/motioneye/data:/etc/motioneye:Z
 Volume=/data:/var/lib/motioneye:Z
 AddDevice=/dev/video0
