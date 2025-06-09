@@ -5,6 +5,16 @@ FROM registry.fedoraproject.org/fedora:latest
 ENV MOTIONEYE_VERSION=0.42.1
 ENV PYTHONUNBUFFERED=1
 
+# MotionEye configuration environment variables
+ENV MOTIONEYE_PORT=8765
+ENV MOTIONEYE_USERNAME=admin
+ENV MOTIONEYE_PASSWORD=admin
+ENV MOTIONEYE_CONF_PATH=/etc/motioneye
+ENV MOTIONEYE_RUN_PATH=/var/run/motion
+ENV MOTIONEYE_MEDIA_PATH=/var/lib/motioneye
+ENV MOTIONEYE_LOG_LEVEL=info
+ENV MOTIONEYE_LOG_FILE=/var/log/motion/motioneye.log
+
 # Install system dependencies
 RUN dnf update -y && \
     dnf install -y \
@@ -29,7 +39,7 @@ COPY config/nginx.conf /etc/nginx/nginx.conf
 COPY config/supervisord.conf /etc/supervisord.conf
 
 # Expose ports
-EXPOSE 8765
+EXPOSE ${MOTIONEYE_PORT}
 
 # Set up entrypoint
 COPY entrypoint.sh /entrypoint.sh
@@ -40,6 +50,6 @@ VOLUME ["/var/lib/motioneye", "/var/log/motion"]
 
 # Set up healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8765/ || exit 1
+    CMD curl -f http://localhost:${MOTIONEYE_PORT}/ || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"] 
