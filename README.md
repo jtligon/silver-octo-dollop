@@ -27,8 +27,11 @@ This repository contains a containerized deployment of MotionEye using bootc, de
      --name motioneye \
      -p 8765:8765 \
      -p 8766:8766 \
+     -p 9090:9090 \
+     -p 9100:9100 \
      -v /path/to/recordings:/var/lib/motioneye \
      -v /path/to/ssl:/etc/motioneye/ssl \
+     -v /path/to/metrics:/etc/motioneye/metrics \
      --device=/dev/video0:/dev/video0 \
      quay.io/jtligon/fitlet2
    ```
@@ -52,6 +55,9 @@ The container can be configured using the following environment variables:
 | `MOTIONEYE_SSL_ENABLED` | Enable SSL/TLS | false |
 | `MOTIONEYE_SSL_CERT` | SSL certificate path | /etc/motioneye/ssl/cert.pem |
 | `MOTIONEYE_SSL_KEY` | SSL private key path | /etc/motioneye/ssl/key.pem |
+| `MOTIONEYE_METRICS_PORT` | Prometheus metrics port | 9090 |
+| `MOTIONEYE_METRICS_ENABLED` | Enable metrics collection | false |
+| `MOTIONEYE_LOG_RETENTION_DAYS` | Number of days to keep logs | 30 |
 
 ### Security Features
 
@@ -80,6 +86,45 @@ The web interface is protected by several security headers:
 - Referrer-Policy
 - Content-Security-Policy
 - Strict-Transport-Security
+
+### Monitoring and Maintenance
+
+#### Metrics Collection
+The container includes Prometheus and Node Exporter for metrics collection:
+
+1. Enable metrics collection:
+   ```bash
+   -e MOTIONEYE_METRICS_ENABLED=true
+   ```
+
+2. Access metrics:
+   - Prometheus: `http://your-device-ip:9090`
+   - Node Exporter: `http://your-device-ip:9100`
+
+Available metrics include:
+- System metrics (CPU, memory, disk usage)
+- MotionEye-specific metrics
+- Network statistics
+- Camera status and performance
+
+#### Log Management
+- Logs are automatically rotated daily
+- Compressed logs are retained for 30 days by default
+- Configure retention period with `MOTIONEYE_LOG_RETENTION_DAYS`
+- Logs are stored in `/var/log/motion/`
+
+#### Backup and Restore
+1. Backup configuration and data:
+   ```bash
+   podman exec motioneye tar -czf backup.tar.gz /var/lib/motioneye /etc/motioneye
+   podman cp motioneye:/backup.tar.gz ./backup.tar.gz
+   ```
+
+2. Restore from backup:
+   ```bash
+   podman cp backup.tar.gz motioneye:/backup.tar.gz
+   podman exec motioneye tar -xzf backup.tar.gz -C /
+   ```
 
 ### Basic Settings
 - Web Interface: Access at `http://your-device-ip:8765` or `https://your-device-ip:8766` (if SSL enabled)
@@ -118,6 +163,11 @@ The web interface is protected by several security headers:
    - Verify SSL certificates are properly mounted
    - Check certificate permissions
    - Ensure SSL is properly enabled in environment variables
+
+5. **Monitoring issues**
+   - Verify metrics collection is enabled
+   - Check Prometheus and Node Exporter logs
+   - Ensure ports 9090 and 9100 are accessible
 
 ## Support
 

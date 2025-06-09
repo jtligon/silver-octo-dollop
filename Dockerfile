@@ -20,6 +20,11 @@ ENV MOTIONEYE_SSL_CERT=/etc/motioneye/ssl/cert.pem
 ENV MOTIONEYE_SSL_KEY=/etc/motioneye/ssl/key.pem
 ENV MOTIONEYE_SSL_ENABLED=false
 
+# Monitoring environment variables
+ENV MOTIONEYE_METRICS_PORT=9090
+ENV MOTIONEYE_METRICS_ENABLED=false
+ENV MOTIONEYE_LOG_RETENTION_DAYS=30
+
 # Install system dependencies
 RUN dnf update -y && \
     dnf install -y \
@@ -31,29 +36,36 @@ RUN dnf update -y && \
     nginx \
     supervisor \
     openssl \
+    prometheus-node-exporter \
+    logrotate \
     && dnf clean all
 
 # Create necessary directories
-RUN mkdir -p /var/lib/motioneye /var/log/motion /var/run/motion /etc/motioneye/ssl
+RUN mkdir -p /var/lib/motioneye /var/log/motion /var/run/motion /etc/motioneye/ssl /etc/motioneye/metrics
 
-# Install motioneye
-RUN pip3 install motioneye==${MOTIONEYE_VERSION}
+# Install motioneye and monitoring dependencies
+RUN pip3 install motioneye==${MOTIONEYE_VERSION} \
+    prometheus-client \
+    python-json-logger
 
 # Copy configuration files
 COPY config/motioneye.conf /etc/motioneye/motioneye.conf
 COPY config/nginx.conf /etc/nginx/nginx.conf
 COPY config/supervisord.conf /etc/supervisord.conf
+COPY config/logrotate.conf /etc/logrotate.d/motioneye
+COPY config/prometheus.yml /etc/motioneye/metrics/prometheus.yml
 
 # Expose ports
 EXPOSE ${MOTIONEYE_PORT}
 EXPOSE 8766
+EXPOSE ${MOTIONEYE_METRICS_PORT}
 
 # Set up entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Set up volumes
-VOLUME ["/var/lib/motioneye", "/var/log/motion", "/etc/motioneye/ssl"]
+VOLUME ["/var/lib/motioneye", "/var/log/motion", "/etc/motioneye/ssl", "/etc/motioneye/metrics"]
 
 # Set up healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
