@@ -15,6 +15,11 @@ ENV MOTIONEYE_MEDIA_PATH=/var/lib/motioneye
 ENV MOTIONEYE_LOG_LEVEL=info
 ENV MOTIONEYE_LOG_FILE=/var/log/motion/motioneye.log
 
+# SSL/TLS environment variables
+ENV MOTIONEYE_SSL_CERT=/etc/motioneye/ssl/cert.pem
+ENV MOTIONEYE_SSL_KEY=/etc/motioneye/ssl/key.pem
+ENV MOTIONEYE_SSL_ENABLED=false
+
 # Install system dependencies
 RUN dnf update -y && \
     dnf install -y \
@@ -25,10 +30,11 @@ RUN dnf update -y && \
     motion \
     nginx \
     supervisor \
+    openssl \
     && dnf clean all
 
 # Create necessary directories
-RUN mkdir -p /var/lib/motioneye /var/log/motion /var/run/motion
+RUN mkdir -p /var/lib/motioneye /var/log/motion /var/run/motion /etc/motioneye/ssl
 
 # Install motioneye
 RUN pip3 install motioneye==${MOTIONEYE_VERSION}
@@ -40,13 +46,14 @@ COPY config/supervisord.conf /etc/supervisord.conf
 
 # Expose ports
 EXPOSE ${MOTIONEYE_PORT}
+EXPOSE 8766
 
 # Set up entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Set up volumes
-VOLUME ["/var/lib/motioneye", "/var/log/motion"]
+VOLUME ["/var/lib/motioneye", "/var/log/motion", "/etc/motioneye/ssl"]
 
 # Set up healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

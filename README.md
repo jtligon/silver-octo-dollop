@@ -26,7 +26,9 @@ This repository contains a containerized deployment of MotionEye using bootc, de
    podman run -d \
      --name motioneye \
      -p 8765:8765 \
+     -p 8766:8766 \
      -v /path/to/recordings:/var/lib/motioneye \
+     -v /path/to/ssl:/etc/motioneye/ssl \
      --device=/dev/video0:/dev/video0 \
      quay.io/jtligon/fitlet2
    ```
@@ -47,23 +49,40 @@ The container can be configured using the following environment variables:
 | `MOTIONEYE_MEDIA_PATH` | Media storage directory | /var/lib/motioneye |
 | `MOTIONEYE_LOG_LEVEL` | Logging level (debug/info/warning/error) | info |
 | `MOTIONEYE_LOG_FILE` | Log file path | /var/log/motion/motioneye.log |
+| `MOTIONEYE_SSL_ENABLED` | Enable SSL/TLS | false |
+| `MOTIONEYE_SSL_CERT` | SSL certificate path | /etc/motioneye/ssl/cert.pem |
+| `MOTIONEYE_SSL_KEY` | SSL private key path | /etc/motioneye/ssl/key.pem |
 
-Example with custom configuration:
-```bash
-podman run -d \
-  --name motioneye \
-  -p 8080:8080 \
-  -v /path/to/recordings:/var/lib/motioneye \
-  --device=/dev/video0:/dev/video0 \
-  -e MOTIONEYE_PORT=8080 \
-  -e MOTIONEYE_USERNAME=myuser \
-  -e MOTIONEYE_PASSWORD=mypassword \
-  -e MOTIONEYE_LOG_LEVEL=debug \
-  quay.io/jtligon/fitlet2
-```
+### Security Features
+
+#### SSL/TLS Support
+The container supports SSL/TLS encryption for secure access to the web interface. To enable SSL:
+
+1. Mount a volume for SSL certificates:
+   ```bash
+   -v /path/to/ssl:/etc/motioneye/ssl
+   ```
+
+2. Enable SSL and specify certificate paths:
+   ```bash
+   -e MOTIONEYE_SSL_ENABLED=true \
+   -e MOTIONEYE_SSL_CERT=/etc/motioneye/ssl/cert.pem \
+   -e MOTIONEYE_SSL_KEY=/etc/motioneye/ssl/key.pem
+   ```
+
+3. If no certificates are provided, the container will generate self-signed certificates.
+
+#### Security Headers
+The web interface is protected by several security headers:
+- X-Frame-Options
+- X-XSS-Protection
+- X-Content-Type-Options
+- Referrer-Policy
+- Content-Security-Policy
+- Strict-Transport-Security
 
 ### Basic Settings
-- Web Interface: Access at `http://your-device-ip:8765`
+- Web Interface: Access at `http://your-device-ip:8765` or `https://your-device-ip:8766` (if SSL enabled)
 - Default credentials: admin/admin (change immediately after first login)
 
 ### Storage
@@ -87,12 +106,18 @@ podman run -d \
 2. **Web interface not accessible**
    - Verify container is running
    - Check port mapping
-   - Ensure firewall allows port 8765
+   - Ensure firewall allows ports 8765 and 8766
+   - Check SSL certificate configuration if using HTTPS
 
 3. **Recording issues**
    - Verify storage volume has sufficient space
    - Check write permissions
    - Review motion detection settings
+
+4. **SSL/TLS issues**
+   - Verify SSL certificates are properly mounted
+   - Check certificate permissions
+   - Ensure SSL is properly enabled in environment variables
 
 ## Support
 

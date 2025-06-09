@@ -19,8 +19,27 @@ media_path = ${MOTIONEYE_MEDIA_PATH}
 port = ${MOTIONEYE_PORT}
 EOF
 
-# Update nginx configuration with the correct port
+# Handle SSL setup
+if [ "${MOTIONEYE_SSL_ENABLED}" = "true" ]; then
+    # Check if SSL certificates exist
+    if [ ! -f "${MOTIONEYE_SSL_CERT}" ] || [ ! -f "${MOTIONEYE_SSL_KEY}" ]; then
+        echo "Generating self-signed SSL certificates..."
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout "${MOTIONEYE_SSL_KEY}" \
+            -out "${MOTIONEYE_SSL_CERT}" \
+            -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+    fi
+    
+    # Set proper permissions for SSL certificates
+    chmod 600 "${MOTIONEYE_SSL_KEY}"
+    chmod 644 "${MOTIONEYE_SSL_CERT}"
+fi
+
+# Update nginx configuration
 sed -i "s/listen 8765/listen ${MOTIONEYE_PORT}/" /etc/nginx/nginx.conf
+sed -i "s/\${MOTIONEYE_SSL_CERT}/${MOTIONEYE_SSL_CERT}/g" /etc/nginx/nginx.conf
+sed -i "s/\${MOTIONEYE_SSL_KEY}/${MOTIONEYE_SSL_KEY}/g" /etc/nginx/nginx.conf
+sed -i "s/\$ssl_enabled/${MOTIONEYE_SSL_ENABLED}/g" /etc/nginx/nginx.conf
 
 # Start supervisord
 exec /usr/bin/supervisord -n -c /etc/supervisord.conf 
