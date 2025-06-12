@@ -1,10 +1,10 @@
 A bootc based deployment of motioneye in a container for use with an x86 device that has a webcam plugged into it.
 
-[![Docker Repository on Quay](https://quay.io/repository/jtligon/fitlet2/status "Docker Repository on Quay")](https://quay.io/repository/jtligon/fitlet2)
+[![Container Repository on Quay](https://quay.io/repository/jtligon/fitlet2/status "Container Repository on Quay")](https://quay.io/repository/jtligon/fitlet2)
 
 ## Overview
 
-This repository contains a containerized deployment of MotionEye using bootc, designed for x86 devices with webcam support. MotionEye provides a web-based interface for video surveillance, motion detection, and recording capabilities.
+This repository contains a containerized deployment of MotionEye using bootc and Podman, designed for x86 devices with webcam support. MotionEye provides a web-based interface for video surveillance, motion detection, and recording capabilities. The container is built using a `motioneye.Containerfile` (compatible with Podman and Docker), following modern best practices.
 
 ## Hardware Requirements
 
@@ -176,3 +176,8 @@ For issues and feature requests, please open an issue in this repository.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+To build the container image locally using Podman and the provided `motioneye.Containerfile`:
+```bash
+podman build -f motioneye.Containerfile -t your_image_name .
+```
