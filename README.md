@@ -1,10 +1,25 @@
-A bootc based deployment of motioneye in a container for use with an x86 device that has a webcam plugged into it.
+# MotionEye for Fitlet2
+
+A bootc-based deployment of MotionEye in a container for use with an x86 device that has a webcam plugged into it.
 
 [![Container Repository on Quay](https://quay.io/repository/jtligon/fitlet2/status "Container Repository on Quay")](https://quay.io/repository/jtligon/fitlet2)
 
 ## Overview
 
-This repository contains a containerized deployment of MotionEye using bootc and Podman, designed for x86 devices with webcam support. MotionEye provides a web-based interface for video surveillance, motion detection, and recording capabilities. The container is built using a `containerfiles/motioneye.Containerfile` (compatible with Podman and Docker), following modern best practices.
+This repository contains two different container types:
+
+1. **MotionEye Container** (`containerfiles/motioneye.Containerfile`)
+   - A standard container for running MotionEye
+   - Can be run on any system with Podman/Docker
+   - Provides video surveillance, motion detection, and recording capabilities
+   - Suitable for testing and development
+
+2. **Fitlet Bootc Container** (`containerfiles/fitlet.Containerfile`)
+   - A bootc-based container that creates a complete OS image
+   - Specifically designed for Fitlet2 hardware
+   - Includes Cockpit for web-based system management
+   - Provides a complete, bootable OS with MotionEye integration
+   - Suitable for production deployment on Fitlet2 devices
 
 ## Hardware Requirements
 
@@ -16,12 +31,14 @@ This repository contains a containerized deployment of MotionEye using bootc and
 
 ## Installation
 
-1. Ensure your device has bootc installed and configured
-2. Pull the container image:
+### Option 1: MotionEye Container (Development/Testing)
+
+1. Build the container image:
    ```bash
-   podman pull quay.io/jtligon/fitlet2
+   podman build -f containerfiles/motioneye.Containerfile -t motioneye:latest .
    ```
-3. Run the container:
+
+2. Run the container:
    ```bash
    podman run -d \
      --name motioneye \
@@ -33,8 +50,24 @@ This repository contains a containerized deployment of MotionEye using bootc and
      -v /path/to/ssl:/etc/motioneye/ssl \
      -v /path/to/metrics:/etc/motioneye/metrics \
      --device=/dev/video0:/dev/video0 \
-     quay.io/jtligon/fitlet2
+     motioneye:latest
    ```
+
+### Option 2: Fitlet Bootc Container (Production)
+
+1. Build the bootc image:
+   ```bash
+   bootc build -f containerfiles/fitlet.Containerfile -t fitlet:latest .
+   ```
+
+2. Create a bootable disk image:
+   ```bash
+   bootc image build -t fitlet:latest -o fitlet.img
+   ```
+
+3. Flash the image to your Fitlet2's storage device
+
+4. Boot the Fitlet2 from the new image
 
 ## Configuration
 
@@ -90,7 +123,7 @@ The web interface is protected by several security headers:
 ### Monitoring and Maintenance
 
 #### Metrics Collection
-The container includes Prometheus and Node Exporter for metrics collection:
+The container includes basic metrics collection:
 
 1. Enable metrics collection:
    ```bash
@@ -98,20 +131,16 @@ The container includes Prometheus and Node Exporter for metrics collection:
    ```
 
 2. Access metrics:
-   - Prometheus: `http://your-device-ip:9090`
-   - Node Exporter: `http://your-device-ip:9100`
+   - Metrics endpoint: `http://your-device-ip:8985`
 
 Available metrics include:
-- System metrics (CPU, memory, disk usage)
 - MotionEye-specific metrics
-- Network statistics
 - Camera status and performance
 
 #### Log Management
-- Logs are automatically rotated daily
-- Compressed logs are retained for 30 days by default
-- Configure retention period with `MOTIONEYE_LOG_RETENTION_DAYS`
 - Logs are stored in `/var/log/motion/`
+- Configure log level with `MOTIONEYE_LOG_LEVEL`
+- Log file path can be configured with `MOTIONEYE_LOG_FILE`
 
 #### Backup and Restore
 1. Backup configuration and data:
