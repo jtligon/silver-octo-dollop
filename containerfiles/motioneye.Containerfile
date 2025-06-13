@@ -5,7 +5,7 @@ ENV MOTIONEYE_VERSION=0.42.1
 
 # Copy configuration files
 COPY motioneye.conf /etc/motioneye/motioneye.conf
-COPY motion.conf /etc/motioneye/motion.conf
+COPY motion/motion.conf /etc/motioneye/motion.conf
 
 # Set up volumes
 VOLUME ["/etc/motioneye", "/var/lib/motioneye"]
