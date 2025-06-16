@@ -1,10 +1,21 @@
 [Unit]
-Description=Import an ssh key from Jeff
+Description=Import SSH public key from GitHub for user jtligon
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -c "wget -O - https://github.com/jtligon.keys >> /var/home/jtligon/.ssh/authorized_keys"
+# Create .ssh directory with proper permissions if it doesn't exist
+ExecStartPre=/bin/mkdir -p /var/home/jtligon/.ssh
+ExecStartPre=/bin/chown jtligon:jtligon /var/home/jtligon/.ssh
+ExecStartPre=/bin/chmod 700 /var/home/jtligon/.ssh
+# Download and append SSH public key from GitHub, avoiding duplicates
+ExecStart=/bin/bash -c 'KEY=$(wget -qO- https://github.com/jtligon.keys) && if [ -n "$KEY" ] && ! grep -Fxq "$KEY" /var/home/jtligon/.ssh/authorized_keys 2>/dev/null; then echo "$KEY" >> /var/home/jtligon/.ssh/authorized_keys; fi'
+# Set proper permissions on authorized_keys file
+ExecStartPost=/bin/chown jtligon:jtligon /var/home/jtligon/.ssh/authorized_keys
+ExecStartPost=/bin/chmod 600 /var/home/jtligon/.ssh/authorized_keys
 RemainAfterExit=yes
+User=root
 
 [Install]
-WantedBy=network.target
+WantedBy=multi-user.target
