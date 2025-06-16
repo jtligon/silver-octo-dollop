@@ -10,12 +10,14 @@ FROM quay.io/fedora/fedora-bootc:42-x86_64
 #   - cockpit-storaged: Storage/disk management interface
 #   - cockpit-ws: WebSocket proxy for Cockpit
 #   - cockpit-selinux: SELinux management interface
+# - openssh-server: SSH daemon for remote access
+# - openssh-clients: SSH client tools
 # - wpa_supplicant: WiFi network authentication daemon
 # - iwlwifi-mvm-firmware: Intel WiFi firmware for modern Intel wireless cards
 # - git: Version control system (likely needed for configuration management)
 # - wget: HTTP/HTTPS/FTP download utility
 # Clean package cache to reduce image size
-RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws wpa_supplicant cockpit-selinux iwlwifi-mvm-firmware git wget && dnf clean all
+RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws openssh-server openssh-clients wpa_supplicant cockpit-selinux iwlwifi-mvm-firmware git wget && dnf clean all
 
 # Configure passwordless sudo for wheel group members
 # This allows users in the wheel group to run sudo commands without entering a password
@@ -28,10 +30,17 @@ ADD wheel-passwordless-sudo /etc/sudoers.d/wheel-passwordless-sudo
 # - /data: General data directory (may be used for additional storage)
 RUN mkdir -p /motioneye/config /motioneye/data /data
 
+# Create user account for remote SSH access
+# - Creates user 'jtligon' with home directory
+# - Adds user to wheel group for sudo access
+# - Sets up proper home directory permissions
+RUN useradd -m -G wheel jtligon
+
 # Enable systemd services to start automatically on boot
 # - podman-auto-update.timer: Automatically updates running containers on schedule
 # - cockpit.socket: Enables Cockpit web interface (socket activation)
-RUN systemctl enable podman-auto-update.timer cockpit.socket
+# - sshd.service: SSH daemon for remote access
+RUN systemctl enable podman-auto-update.timer cockpit.socket sshd.service
 
 # Install MotionEye container configuration for systemd
 # This file defines how the MotionEye container should be run as a systemd service
