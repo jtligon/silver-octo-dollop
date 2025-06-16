@@ -37,3 +37,14 @@ RUN systemctl enable podman-auto-update.timer cockpit.socket
 # This file defines how the MotionEye container should be run as a systemd service
 # Systemd will automatically start/manage the MotionEye container based on this config
 COPY ./motioneye.container /etc/containers/systemd/motioneye.container
+
+# Install SSH key import service for automatic passwordless SSH access
+# This one-shot service downloads the user's SSH public key from GitHub on first boot
+# - Runs once after network is available during system startup
+# - Creates .ssh directory with proper permissions (700) if it doesn't exist
+# - Downloads SSH public key from GitHub (https://github.com/jtligon.keys)
+# - Prevents duplicate entries by checking if key already exists
+# - Sets correct ownership (jtligon:jtligon) and permissions (600) for security
+# - Enables passwordless SSH access for remote management and automation
+COPY ./oneShot.unit /etc/systemd/system/ssh-key-import.service
+RUN systemctl enable ssh-key-import.service
