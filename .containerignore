@@ -1,0 +1,19 @@
+# Exclude large disk images and build artifacts
+image/
+*.raw
+*.img
+*.iso
+*.qcow2
+
+# Exclude git and development files
+.git/
+.gitignore
+README.md
+
+# Exclude temporary and cache files
+.DS_Store
+*.tmp
+*.log
+
+# Exclude container files directory (not needed in build context)
+containerfiles/
