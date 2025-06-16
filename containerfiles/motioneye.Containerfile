@@ -11,7 +11,10 @@ COPY motion/motion.conf /etc/motioneye/motion.conf
 VOLUME ["/etc/motioneye", "/var/lib/motioneye"]
 
 # Expose ports
-EXPOSE 8765
+EXPOSE 8765 8766
 
-# Start MotionEye
-CMD ["motioneye", "start"] 
+# Copy startup script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+CMD ["/entrypoint.sh"] 

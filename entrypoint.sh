@@ -41,5 +41,5 @@ sed -i "s/\${MOTIONEYE_SSL_CERT}/${MOTIONEYE_SSL_CERT}/g" /etc/nginx/nginx.conf
 sed -i "s/\${MOTIONEYE_SSL_KEY}/${MOTIONEYE_SSL_KEY}/g" /etc/nginx/nginx.conf
 sed -i "s/\$ssl_enabled/${MOTIONEYE_SSL_ENABLED}/g" /etc/nginx/nginx.conf
 
-# Start supervisord
-exec /usr/bin/supervisord -n -c /etc/supervisord.conf 
+# Start MotionEye
+motioneye start 
