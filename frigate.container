@@ -1,0 +1,23 @@
+[Unit]
+Description=Frigate NVR Container
+After=local-fs.target
+
+[Container]
+Image=ghcr.io/blakeblackshear/frigate:stable
+Volume=/frigate/config:/config:Z
+Volume=/frigate/media:/media:Z
+AddDevice=/dev/video0
+AddDevice=/dev/dri
+PublishPort=5000:5000
+PublishPort=8554:8554
+PublishPort=8555:8555
+Timezone=local
+HostName=Frigate
+Environment=FRIGATE_RTSP_PASSWORD=password
+
+[Service]
+Restart=always
+
+[Install]
+#start by default on Boot
+WantedBy=multiuser.target default.target 
