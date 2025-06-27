@@ -54,49 +54,46 @@ RUN systemctl enable podman-auto-update.timer cockpit.socket sshd.service
 # Install container configurations for systemd
 # These files define how the containers should be run as systemd services
 # Systemd will automatically start/manage the containers based on these configs
-COPY ./frigate.container /etc/containers/systemd/frigate.container
-COPY ./mosquitto.container /etc/containers/systemd/mosquitto.container
-COPY ./kiln-ocr.container /etc/containers/systemd/kiln-ocr.container
+COPY ./systemd/frigate.container /etc/containers/systemd/frigate.container
+COPY ./systemd/mosquitto.container /etc/containers/systemd/mosquitto.container
+COPY ./systemd/kiln-ocr.container /etc/containers/systemd/kiln-ocr.container
 
 # Install configuration files for services
 # Frigate configuration for kiln monitoring with OCR zones
-COPY ./frigate.yml /frigate/config/config.yml
-COPY ./labels.txt /frigate/config/labels.txt
+COPY ./config/frigate.yml /frigate/config/config.yml
+COPY ./config/labels.txt /frigate/config/labels.txt
 
 # Mosquitto MQTT broker configuration
-COPY ./mosquitto.conf /mosquitto/config/mosquitto.conf
+COPY ./config/mosquitto.conf /mosquitto/config/mosquitto.conf
 
 # OCR processing scripts and dependencies
-COPY ./ocr-processor.py /kiln-ocr/ocr_processor.py
-COPY ./frigate-ocr-integration.py /kiln-ocr/frigate-ocr-integration.py
-COPY ./temperature-logger.py /kiln-ocr/temperature-logger.py
-COPY ./requirements.txt /kiln-ocr/requirements.txt
+COPY ./code/ocr-processor.py /kiln-ocr/ocr_processor.py
+COPY ./code/frigate-ocr-integration.py /kiln-ocr/frigate-ocr-integration.py
+COPY ./code/temperature-logger.py /kiln-ocr/temperature-logger.py
+COPY ./config/requirements.txt /kiln-ocr/requirements.txt
 
 # Install Python dependencies for OCR processing
 RUN pip3 install -r /kiln-ocr/requirements.txt
 
 # Install storage setup script and data management tools
-COPY ./storage-setup.sh /usr/local/bin/storage-setup.sh
+COPY ./scripts/storage-setup.sh /usr/local/bin/storage-setup.sh
 RUN chmod +x /usr/local/bin/storage-setup.sh
 
 # Install network security setup scripts
-COPY ./firewall-setup.sh /usr/local/bin/firewall-setup.sh
-COPY ./ssl-setup.sh /usr/local/bin/ssl-setup.sh
-COPY ./mqtt-auth-setup.sh /usr/local/bin/mqtt-auth-setup.sh
+COPY ./scripts/firewall-setup.sh /usr/local/bin/firewall-setup.sh
+COPY ./scripts/ssl-setup.sh /usr/local/bin/ssl-setup.sh
+COPY ./scripts/mqtt-auth-setup.sh /usr/local/bin/mqtt-auth-setup.sh
 RUN chmod +x /usr/local/bin/firewall-setup.sh /usr/local/bin/ssl-setup.sh /usr/local/bin/mqtt-auth-setup.sh
 
-<<<<<<< HEAD
-=======
 # Install system integration script
-COPY ./systemd-integration.sh /usr/local/bin/systemd-integration.sh
+COPY ./scripts/systemd-integration.sh /usr/local/bin/systemd-integration.sh
 RUN chmod +x /usr/local/bin/systemd-integration.sh
 
 # Install testing and validation scripts
-COPY ./testing-validation.sh /usr/local/bin/testing-validation.sh
-COPY ./performance-test.sh /usr/local/bin/performance-test.sh
+COPY ./scripts/testing-validation.sh /usr/local/bin/testing-validation.sh
+COPY ./scripts/performance-test.sh /usr/local/bin/performance-test.sh
 RUN chmod +x /usr/local/bin/testing-validation.sh /usr/local/bin/performance-test.sh
 
->>>>>>> claude
 # Install SSH key import service for automatic passwordless SSH access
 # This one-shot service downloads the user's SSH public key from GitHub on first boot
 # - Runs once after network is available during system startup
@@ -105,5 +102,5 @@ RUN chmod +x /usr/local/bin/testing-validation.sh /usr/local/bin/performance-tes
 # - Prevents duplicate entries by checking if key already exists
 # - Sets correct ownership (jtligon:jtligon) and permissions (600) for security
 # - Enables passwordless SSH access for remote management and automation
-COPY ./oneShot.unit /etc/systemd/system/ssh-key-import.service
+COPY ./systemd/oneShot.unit /etc/systemd/system/ssh-key-import.service
 RUN systemctl enable ssh-key-import.service
