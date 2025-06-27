@@ -1,0 +1,20 @@
+[Unit]
+Description=Kiln OCR Processing Container
+After=frigate.service mosquitto.service
+
+[Container]
+Image=python:3.11-slim
+Volume=/frigate/media:/frigate/media:Z
+Volume=/kiln-ocr:/app:Z
+WorkingDirectory=/app
+Environment=PYTHONPATH=/app
+Environment=TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata
+Exec=python3 frigate-ocr-integration.py
+Network=host
+
+[Service]
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target 

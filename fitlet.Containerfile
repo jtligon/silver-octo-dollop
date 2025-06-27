@@ -19,22 +19,25 @@ FROM quay.io/fedora/fedora-bootc:42-x86_64
 # - intel-media-driver: Intel GPU hardware acceleration for video processing
 # - libva-intel-driver: Video Acceleration API for Intel GPUs
 # - mesa-dri-drivers: Mesa DRI drivers for GPU acceleration
+# - python3-pip: Python package manager for OCR dependencies
+# - tesseract-ocr: OCR engine for text recognition
 # Clean package cache to reduce image size
-RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws openssh-server openssh-clients wpa_supplicant cockpit-selinux iwlwifi-mvm-firmware git wget intel-media-driver libva-intel-driver mesa-dri-drivers && dnf clean all
+RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws openssh-server openssh-clients wpa_supplicant cockpit-selinux iwlwifi-mvm-firmware git wget intel-media-driver libva-intel-driver mesa-dri-drivers python3-pip tesseract-ocr && dnf clean all
 
 # Configure passwordless sudo for wheel group members
 # This allows users in the wheel group to run sudo commands without entering a password
 # Essential for automated operations and container management
 ADD wheel-passwordless-sudo /etc/sudoers.d/wheel-passwordless-sudo
 
-# Create directory structure for Frigate NVR and MQTT broker
+# Create directory structure for Frigate NVR, MQTT broker, and OCR processing
 # - /frigate/config: Configuration files for Frigate NVR
 # - /frigate/media: Storage for recorded videos and snapshots
 # - /mosquitto/config: MQTT broker configuration
 # - /mosquitto/data: MQTT broker persistent data
 # - /mosquitto/log: MQTT broker logs
+# - /kiln-ocr: OCR processing scripts and dependencies
 # - /data: General data directory (may be used for additional storage)
-RUN mkdir -p /frigate/config /frigate/media /mosquitto/config /mosquitto/data /mosquitto/log /data
+RUN mkdir -p /frigate/config /frigate/media /mosquitto/config /mosquitto/data /mosquitto/log /kiln-ocr /data
 
 # Create user account for remote SSH access
 # - Creates user 'jtligon' with home directory
@@ -53,6 +56,7 @@ RUN systemctl enable podman-auto-update.timer cockpit.socket sshd.service
 # Systemd will automatically start/manage the containers based on these configs
 COPY ./frigate.container /etc/containers/systemd/frigate.container
 COPY ./mosquitto.container /etc/containers/systemd/mosquitto.container
+COPY ./kiln-ocr.container /etc/containers/systemd/kiln-ocr.container
 
 # Install configuration files for services
 # Frigate configuration for kiln monitoring with OCR zones
@@ -61,6 +65,14 @@ COPY ./labels.txt /frigate/config/labels.txt
 
 # Mosquitto MQTT broker configuration
 COPY ./mosquitto.conf /mosquitto/config/mosquitto.conf
+
+# OCR processing scripts and dependencies
+COPY ./ocr-processor.py /kiln-ocr/ocr_processor.py
+COPY ./frigate-ocr-integration.py /kiln-ocr/frigate-ocr-integration.py
+COPY ./requirements.txt /kiln-ocr/requirements.txt
+
+# Install Python dependencies for OCR processing
+RUN pip3 install -r /kiln-ocr/requirements.txt
 
 # Install SSH key import service for automatic passwordless SSH access
 # This one-shot service downloads the user's SSH public key from GitHub on first boot
