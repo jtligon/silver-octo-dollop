@@ -1,0 +1,242 @@
+# Kiln Monitoring Dashboard for Home Assistant
+# Create this as a new dashboard in your Home Assistant
+
+title: Kiln Monitoring
+icon: mdi:pottery
+path: kiln-monitoring
+
+cards:
+  # Header Card with Current Status
+  - type: horizontal-stack
+    cards:
+      - type: entity
+        entity: sensor.kiln_temperature
+        name: Current Temperature
+        icon: mdi:thermometer-high
+        state_color: true
+        card_mod:
+          style: |
+            ha-card {
+              font-size: 24px;
+              font-weight: bold;
+            }
+      
+      - type: entity
+        entity: sensor.kiln_status
+        name: Kiln Status
+        icon: mdi:pottery
+        state_color: true
+      
+      - type: entity
+        entity: binary_sensor.kiln_firing_active
+        name: Firing Active
+        icon: mdi:fire
+        state_color: true
+
+  # Main Temperature Display
+  - type: gauge
+    entity: sensor.kiln_temperature
+    name: Kiln Temperature
+    min: 0
+    max: 2500
+    needle: true
+    severity:
+      green: 0
+      yellow: 1000
+      red: 2000
+    card_mod:
+      style: |
+        ha-card {
+          height: 200px;
+        }
+
+  # Firing Duration and Time
+  - type: horizontal-stack
+    cards:
+      - type: entity
+        entity: sensor.kiln_firing_duration
+        name: Firing Duration
+        icon: mdi:clock-outline
+        unit: minutes
+        state_color: true
+        card_mod:
+          style: |
+            ha-card {
+              font-size: 18px;
+            }
+      
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.kiln_firing_active
+            state: "on"
+        card:
+          type: entity
+          entity: sensor.kiln_firing_status
+          attribute: start_time
+          name: Started At
+          icon: mdi:clock-start
+
+  # Temperature Trend Graph
+  - type: history-graph
+    title: Temperature Trend
+    hours_to_show: 24
+    refresh_interval: 60
+    entities:
+      - entity: sensor.kiln_temperature
+        name: Temperature
+      - entity: sensor.kiln_temperature_trend
+        name: Rate of Change
+
+  # Live Camera Feed
+  - type: picture-entity
+    entity: camera.kiln_camera
+    name: Live Kiln View
+    show_state: false
+    show_name: true
+    camera_view: live
+    card_mod:
+      style: |
+        ha-card {
+          height: 300px;
+        }
+
+  # Alert Status Cards
+  - type: horizontal-stack
+    title: Alert Status
+    cards:
+      - type: entity
+        entity: binary_sensor.kiln_high_temperature_alert
+        name: High Temp Alert
+        icon: mdi:thermometer-alert
+        state_color: true
+      
+      - type: entity
+        entity: binary_sensor.kiln_error_detected
+        name: Error Detected
+        icon: mdi:alert-circle
+        state_color: true
+      
+      - type: entity
+        entity: sensor.kiln_error_code
+        name: Error Code
+        icon: mdi:alert
+        state_color: true
+
+  # Configuration Controls
+  - type: entities
+    title: Configuration
+    show_header_toggle: false
+    entities:
+      - entity: input_number.kiln_high_temp_threshold
+        name: High Temperature Threshold
+        icon: mdi:thermometer-high
+      
+      - entity: input_number.kiln_max_firing_duration
+        name: Maximum Firing Duration
+        icon: mdi:clock-alert
+      
+      - type: divider
+      
+      - entity: sensor.daily_firing_time
+        name: Today's Firing Time
+        icon: mdi:clock-outline
+      
+      - entity: sensor.weekly_firing_time
+        name: This Week's Firing Time
+        icon: mdi:calendar-clock
+
+  # System Status
+  - type: entities
+    title: System Status
+    show_header_toggle: false
+    entities:
+      - entity: sensor.kiln_temperature
+        type: attribute
+        attribute: confidence
+        name: Temperature OCR Confidence
+        suffix: "%"
+      
+      - entity: sensor.kiln_temperature
+        type: attribute
+        attribute: timestamp
+        name: Last Temperature Reading
+      
+      - type: divider
+      
+      - entity: sensor.kiln_status
+        type: attribute
+        attribute: confidence
+        name: Status OCR Confidence
+        suffix: "%"
+
+  # Quick Actions
+  - type: entities
+    title: Quick Actions
+    show_header_toggle: false
+    entities:
+      - type: call-service
+        name: Reset Firing Timer
+        service: mqtt.publish
+        service_data:
+          topic: "frigate/kiln/status/firing"
+          payload: '{"firing": false, "reset": true}'
+        icon: mdi:restart
+      
+      - type: call-service
+        name: Acknowledge Error
+        service: persistent_notification.dismiss
+        service_data:
+          notification_id: kiln_error
+        icon: mdi:check-circle
+      
+      - type: navigate
+        path: /config/automation
+        name: Manage Automations
+        icon: mdi:cog
+
+  # Historical Data
+  - type: statistics-graph
+    title: Temperature Statistics (24h)
+    entities:
+      - sensor.kiln_temperature
+    stat_types:
+      - mean
+      - min
+      - max
+    period: hour
+    days_to_show: 1
+
+  # Mini Graph Cards for Trends
+  - type: horizontal-stack
+    cards:
+      - type: mini-graph-card
+        name: Temperature
+        entity: sensor.kiln_temperature
+        hours_to_show: 6
+        points_per_hour: 10
+        line_color: red
+        line_width: 2
+        show:
+          state: true
+          icon: true
+      
+      - type: mini-graph-card
+        name: Firing Duration
+        entity: sensor.kiln_firing_duration
+        hours_to_show: 24
+        points_per_hour: 2
+        line_color: orange
+        line_width: 2
+        show:
+          state: true
+          icon: true
+
+  # Notification History
+  - type: logbook
+    title: Recent Kiln Events
+    entities:
+      - sensor.kiln_temperature
+      - sensor.kiln_status
+      - sensor.kiln_error_code
+      - binary_sensor.kiln_firing_active
+    hours_to_show: 24 
