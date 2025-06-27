@@ -8,11 +8,13 @@ Replace MotionEye with Frigate for advanced kiln monitoring with OCR capabilitie
 ## 📋 Todo List
 
 ### 1. Container Infrastructure Changes
-- [ ] Replace `motioneye.container` with `frigate.container` systemd service
-- [ ] Update `fitlet.Containerfile` to remove MotionEye references and add Frigate requirements
-- [ ] Create Frigate configuration directory structure (`/frigate/config`, `/frigate/media`)
-- [ ] Add required dependencies for Frigate (Intel GPU drivers for hardware acceleration if needed)
-- [ ] Remove obsolete MotionEye directories and references
+- [x] Replace `motioneye.container` with `frigate.container` systemd service
+- [x] Update `fitlet.Containerfile` to remove MotionEye references and add Frigate requirements
+- [x] Create Frigate configuration directory structure (`/frigate/config`, `/frigate/media`)
+- [x] Add required dependencies for Frigate (Intel GPU drivers for hardware acceleration)
+- [x] Remove obsolete MotionEye directories and references
+- [x] Create `mosquitto.container` systemd service for MQTT broker
+- [x] Remove Home Assistant container (using existing HA on network)
 
 ### 2. Frigate Configuration
 - [ ] Create `frigate.yml` configuration file with camera stream configuration
@@ -31,21 +33,20 @@ Replace MotionEye with Frigate for advanced kiln monitoring with OCR capabilitie
 - [ ] Test OCR accuracy with actual kiln display
 
 ### 4. MQTT & Communication Setup
-- [ ] Install and configure MQTT broker (Mosquitto) container
-- [ ] Configure MQTT authentication and security
+- [x] Install and configure MQTT broker (Mosquitto) container
+- [x] Configure MQTT for same-network communication (192.168.x.x)
 - [ ] Set up MQTT topics for temperature data
 - [ ] Configure MQTT topics for status and error codes
-- [ ] Test MQTT message flow
+- [ ] Test MQTT message flow between Fitlet2 and Home Assistant
 
 ### 5. Home Assistant Integration
-- [ ] Install and configure Home Assistant container
-- [ ] Configure Frigate integration in Home Assistant
+- [ ] Configure Frigate integration in existing Home Assistant (192.168.5.x)
+- [ ] Set up MQTT integration in Home Assistant pointing to Fitlet2 (192.168.7.200)
 - [ ] Create Home Assistant sensors for current kiln temperature
 - [ ] Create Home Assistant sensors for target temperature
 - [ ] Create Home Assistant sensors for kiln status/error codes
 - [ ] Create Home Assistant sensors for firing start time
 - [ ] Create Home Assistant sensors for firing duration
-- [ ] Set up persistent storage for Home Assistant database
 
 ### 6. Home Assistant Automations
 #### Temperature Threshold Alerts
@@ -139,8 +140,10 @@ Replace MotionEye with Frigate for advanced kiln monitoring with OCR capabilitie
 ---
 
 ## 🔧 Technical Considerations
-- Intel GPU acceleration availability on Fitlet
+- Intel GPU acceleration availability on Fitlet2
 - Network bandwidth requirements for continuous video processing
 - Storage requirements for recordings and historical data
 - Power consumption impact of additional containers
-- Temperature monitoring accuracy requirements 
+- Temperature monitoring accuracy requirements
+- **Network Setup**: Fitlet2 at 192.168.7.200, Home Assistant at 192.168.5.x (same network)
+- MQTT broker on Fitlet2 will serve Home Assistant over network
