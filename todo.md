@@ -100,12 +100,17 @@ Replace MotionEye with Frigate for advanced kiln monitoring with OCR capabilitie
 - [ ] Test data persistence across container restarts
 
 ### 9. Network & Security
-- [ ] Update firewall rules for Frigate ports
-- [ ] Update firewall rules for Home Assistant ports  
-- [ ] Update firewall rules for MQTT broker ports
-- [ ] Configure SSL certificates for secure web access
-- [ ] Set up Home Assistant authentication
-- [ ] Configure MQTT authentication
+- [x] Update firewall rules for Frigate ports
+- [x] Update firewall rules for Home Assistant ports  
+- [x] Update firewall rules for MQTT broker ports
+- [x] Configure SSL certificates for secure web access
+- [x] Set up MQTT authentication with role-based access control
+- [x] Create client/server certificate infrastructure
+- [x] Configure SSL/TLS for MQTT broker (secure ports 8883/9002)
+- [x] Add network security auditing and monitoring tools
+- [x] Restrict services to local network access only
+- [x] Set up automated certificate monitoring and renewal
+- [ ] Set up Home Assistant authentication (depends on HA configuration)
 - [ ] Review and implement network segmentation
 
 ### 10. System Integration
