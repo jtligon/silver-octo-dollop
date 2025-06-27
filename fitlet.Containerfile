@@ -79,6 +79,21 @@ RUN pip3 install -r /kiln-ocr/requirements.txt
 COPY ./storage-setup.sh /usr/local/bin/storage-setup.sh
 RUN chmod +x /usr/local/bin/storage-setup.sh
 
+# Install network security setup scripts
+COPY ./firewall-setup.sh /usr/local/bin/firewall-setup.sh
+COPY ./ssl-setup.sh /usr/local/bin/ssl-setup.sh
+COPY ./mqtt-auth-setup.sh /usr/local/bin/mqtt-auth-setup.sh
+RUN chmod +x /usr/local/bin/firewall-setup.sh /usr/local/bin/ssl-setup.sh /usr/local/bin/mqtt-auth-setup.sh
+
+# Install system integration script
+COPY ./systemd-integration.sh /usr/local/bin/systemd-integration.sh
+RUN chmod +x /usr/local/bin/systemd-integration.sh
+
+# Install testing and validation scripts
+COPY ./testing-validation.sh /usr/local/bin/testing-validation.sh
+COPY ./performance-test.sh /usr/local/bin/performance-test.sh
+RUN chmod +x /usr/local/bin/testing-validation.sh /usr/local/bin/performance-test.sh
+
 # Install SSH key import service for automatic passwordless SSH access
 # This one-shot service downloads the user's SSH public key from GitHub on first boot
 # - Runs once after network is available during system startup
