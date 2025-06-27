@@ -16,19 +16,25 @@ FROM quay.io/fedora/fedora-bootc:42-x86_64
 # - iwlwifi-mvm-firmware: Intel WiFi firmware for modern Intel wireless cards
 # - git: Version control system (likely needed for configuration management)
 # - wget: HTTP/HTTPS/FTP download utility
+# - intel-media-driver: Intel GPU hardware acceleration for video processing
+# - libva-intel-driver: Video Acceleration API for Intel GPUs
+# - mesa-dri-drivers: Mesa DRI drivers for GPU acceleration
 # Clean package cache to reduce image size
-RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws openssh-server openssh-clients wpa_supplicant cockpit-selinux iwlwifi-mvm-firmware git wget && dnf clean all
+RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws openssh-server openssh-clients wpa_supplicant cockpit-selinux iwlwifi-mvm-firmware git wget intel-media-driver libva-intel-driver mesa-dri-drivers && dnf clean all
 
 # Configure passwordless sudo for wheel group members
 # This allows users in the wheel group to run sudo commands without entering a password
 # Essential for automated operations and container management
 ADD wheel-passwordless-sudo /etc/sudoers.d/wheel-passwordless-sudo
 
-# Create directory structure for MotionEye camera surveillance system
-# - /motioneye/config: Configuration files for MotionEye
-# - /motioneye/data: Storage for recorded videos and images
+# Create directory structure for Frigate NVR and MQTT broker
+# - /frigate/config: Configuration files for Frigate NVR
+# - /frigate/media: Storage for recorded videos and snapshots
+# - /mosquitto/config: MQTT broker configuration
+# - /mosquitto/data: MQTT broker persistent data
+# - /mosquitto/log: MQTT broker logs
 # - /data: General data directory (may be used for additional storage)
-RUN mkdir -p /motioneye/config /motioneye/data /data
+RUN mkdir -p /frigate/config /frigate/media /mosquitto/config /mosquitto/data /mosquitto/log /data
 
 # Create user account for remote SSH access
 # - Creates user 'jtligon' with home directory
@@ -42,10 +48,19 @@ RUN useradd -m -G wheel jtligon
 # - sshd.service: SSH daemon for remote access
 RUN systemctl enable podman-auto-update.timer cockpit.socket sshd.service
 
-# Install MotionEye container configuration for systemd
-# This file defines how the MotionEye container should be run as a systemd service
-# Systemd will automatically start/manage the MotionEye container based on this config
-COPY ./motioneye.container /etc/containers/systemd/motioneye.container
+# Install container configurations for systemd
+# These files define how the containers should be run as systemd services
+# Systemd will automatically start/manage the containers based on these configs
+COPY ./frigate.container /etc/containers/systemd/frigate.container
+COPY ./mosquitto.container /etc/containers/systemd/mosquitto.container
+
+# Install configuration files for services
+# Frigate configuration for kiln monitoring with OCR zones
+COPY ./frigate.yml /frigate/config/config.yml
+COPY ./labels.txt /frigate/config/labels.txt
+
+# Mosquitto MQTT broker configuration
+COPY ./mosquitto.conf /mosquitto/config/mosquitto.conf
 
 # Install SSH key import service for automatic passwordless SSH access
 # This one-shot service downloads the user's SSH public key from GitHub on first boot

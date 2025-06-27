@@ -1,0 +1,143 @@
+# Frigate Configuration for Kiln Monitoring
+# Fitlet2 IP: 192.168.7.200
+# Home Assistant IP: 192.168.5.x
+
+# MQTT Configuration - connects to local broker
+mqtt:
+  host: localhost
+  port: 1883
+  topic_prefix: frigate
+  client_id: frigate_kiln
+  stats_interval: 60
+
+# Database configuration
+database:
+  path: /config/frigate.db
+
+# API configuration
+api:
+  host: 0.0.0.0
+  port: 5000
+
+# Web UI configuration
+ui:
+  live_mode: webrtc
+
+# Hardware acceleration for Intel GPU
+ffmpeg:
+  hwaccel_args: preset-intel-qsv-h264
+
+# Detectors - using CPU for OCR text detection
+detectors:
+  cpu1:
+    type: cpu
+    num_threads: 2
+
+# Model for text detection (specialized for OCR)
+model:
+  width: 640
+  height: 640
+  labelmap_path: /config/labels.txt
+
+# Camera configuration
+cameras:
+  kiln_camera:
+    # Camera stream configuration
+    ffmpeg:
+      inputs:
+        - path: /dev/video0
+          input_args: preset-rpi-64
+          roles:
+            - detect
+            - record
+            - rtmp
+    
+    # Live view settings
+    live:
+      stream_name: kiln_live
+      quality: 8
+      
+    # Detection zones for OCR
+    zones:
+      temperature_display:
+        coordinates: 100,100,300,200  # Adjust based on actual display location
+        filters:
+          - person
+        
+      status_display:
+        coordinates: 100,220,300,280  # Adjust based on status area
+        filters:
+          - person
+          
+      error_display:
+        coordinates: 100,300,300,360  # Adjust based on error code area
+        filters:
+          - person
+
+    # Motion detection settings
+    motion:
+      threshold: 20
+      contour_area: 10
+      delta_alpha: 0.1
+      frame_alpha: 0.01
+      
+    # Recording configuration
+    record:
+      enabled: true
+      retain:
+        days: 7
+        mode: all
+      events:
+        retain:
+          default: 30
+          mode: active_objects
+          
+    # Snapshot configuration
+    snapshots:
+      enabled: true
+      timestamp: true
+      retain:
+        default: 30
+
+# Object detection filters (for OCR processing)
+objects:
+  track:
+    - person  # Using person detection as placeholder for text regions
+  filters:
+    person:
+      min_area: 100
+      max_area: 100000
+      threshold: 0.7
+
+# Recording settings
+record:
+  enabled: true
+  retain:
+    days: 7
+    mode: all
+  events:
+    retain:
+      default: 30
+      objects:
+        person: 30
+
+# Snapshot settings
+snapshots:
+  enabled: true
+  timestamp: true
+  retain:
+    default: 30
+
+# Birdseye view (overview)
+birdseye:
+  enabled: false  # Not needed for single kiln camera
+
+# Logging
+logger:
+  default: info
+  logs:
+    frigate.record: debug
+    frigate.event: debug
+
+# Version
+version: 0.13 
