@@ -27,14 +27,15 @@ RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cock
 # Essential for automated operations and container management
 ADD wheel-passwordless-sudo /etc/sudoers.d/wheel-passwordless-sudo
 
-# Create directory structure for Frigate NVR and MQTT broker
+# Create directory structure for Frigate NVR, MQTT broker, and OCR processing
 # - /frigate/config: Configuration files for Frigate NVR
 # - /frigate/media: Storage for recorded videos and snapshots
 # - /mosquitto/config: MQTT broker configuration
 # - /mosquitto/data: MQTT broker persistent data
 # - /mosquitto/log: MQTT broker logs
+# - /kiln-ocr: OCR processing scripts and dependencies
 # - /data: General data directory (may be used for additional storage)
-RUN mkdir -p /frigate/config /frigate/media /mosquitto/config /mosquitto/data /mosquitto/log /data
+RUN mkdir -p /frigate/config /frigate/media /mosquitto/config /mosquitto/data /mosquitto/log /kiln-ocr /data
 
 # Create user account for remote SSH access
 # - Creates user 'jtligon' with home directory
@@ -51,16 +52,39 @@ RUN systemctl enable podman-auto-update.timer cockpit.socket sshd.service
 # Install container configurations for systemd
 # These files define how the containers should be run as systemd services
 # Systemd will automatically start/manage the containers based on these configs
-COPY ./frigate.container /etc/containers/systemd/frigate.container
-COPY ./mosquitto.container /etc/containers/systemd/mosquitto.container
+COPY ./systemd/frigate.container /etc/containers/systemd/frigate.container
+COPY ./systemd/mosquitto.container /etc/containers/systemd/mosquitto.container
+COPY ./systemd/kiln-ocr.container /etc/containers/systemd/kiln-ocr.container
 
 # Install configuration files for services
 # Frigate configuration for kiln monitoring with OCR zones
-COPY ./frigate.yml /frigate/config/config.yml
-COPY ./labels.txt /frigate/config/labels.txt
+COPY ./config/frigate.yml /frigate/config/config.yml
+COPY ./config/labels.txt /frigate/config/labels.txt
 
 # Mosquitto MQTT broker configuration
-COPY ./mosquitto.conf /mosquitto/config/mosquitto.conf
+COPY ./config/mosquitto.conf /mosquitto/config/mosquitto.conf
+
+# Create OCR data directory (scripts will be in container)
+RUN mkdir -p /kiln-ocr
+
+# Install storage setup script and data management tools
+COPY ./scripts/storage-setup.sh /usr/local/bin/storage-setup.sh
+RUN chmod +x /usr/local/bin/storage-setup.sh
+
+# Install network security setup scripts
+COPY ./scripts/firewall-setup.sh /usr/local/bin/firewall-setup.sh
+COPY ./scripts/ssl-setup.sh /usr/local/bin/ssl-setup.sh
+COPY ./scripts/mqtt-auth-setup.sh /usr/local/bin/mqtt-auth-setup.sh
+RUN chmod +x /usr/local/bin/firewall-setup.sh /usr/local/bin/ssl-setup.sh /usr/local/bin/mqtt-auth-setup.sh
+
+# Install system integration script
+COPY ./scripts/systemd-integration.sh /usr/local/bin/systemd-integration.sh
+RUN chmod +x /usr/local/bin/systemd-integration.sh
+
+# Install testing and validation scripts
+COPY ./scripts/testing-validation.sh /usr/local/bin/testing-validation.sh
+COPY ./scripts/performance-test.sh /usr/local/bin/performance-test.sh
+RUN chmod +x /usr/local/bin/testing-validation.sh /usr/local/bin/performance-test.sh
 
 # Install SSH key import service for automatic passwordless SSH access
 # This one-shot service downloads the user's SSH public key from GitHub on first boot
@@ -70,5 +94,5 @@ COPY ./mosquitto.conf /mosquitto/config/mosquitto.conf
 # - Prevents duplicate entries by checking if key already exists
 # - Sets correct ownership (jtligon:jtligon) and permissions (600) for security
 # - Enables passwordless SSH access for remote management and automation
-COPY ./oneShot.unit /etc/systemd/system/ssh-key-import.service
+COPY ./systemd/oneShot.unit /etc/systemd/system/ssh-key-import.service
 RUN systemctl enable ssh-key-import.service

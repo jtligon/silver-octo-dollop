@@ -12,7 +12,7 @@ mqtt:
 
 # Database configuration
 database:
-  path: /config/frigate.db
+  path: /data/frigate.db
 
 # API configuration
 api:
@@ -120,6 +120,8 @@ record:
       default: 30
       objects:
         person: 30
+  export:
+    timelapse_args: "-vf setpts=0.04*PTS -r 30"
 
 # Snapshot settings
 snapshots:
@@ -127,6 +129,7 @@ snapshots:
   timestamp: true
   retain:
     default: 30
+  quality: 90
 
 # Birdseye view (overview)
 birdseye:

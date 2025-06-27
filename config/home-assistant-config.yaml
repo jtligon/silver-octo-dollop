@@ -1,0 +1,162 @@
+# Home Assistant Configuration for Kiln Monitoring
+# Add these sections to your Home Assistant configuration.yaml
+
+# MQTT Integration
+mqtt:
+  broker: 192.168.7.200  # Fitlet2 IP address
+  port: 1883
+  discovery: true
+  birth_message:
+    topic: "hass/status"
+    payload: "online"
+  will_message:
+    topic: "hass/status"
+    payload: "offline"
+
+# MQTT Sensors for Kiln Monitoring
+sensor:
+  # Current Temperature Sensor
+  - platform: mqtt
+    name: "Kiln Temperature"
+    state_topic: "frigate/kiln/temperature/current"
+    value_template: "{{ value_json.temperature }}"
+    unit_of_measurement: "°F"
+    device_class: temperature
+    icon: mdi:thermometer-high
+    availability:
+      - topic: "frigate/kiln/temperature/current"
+        value_template: "{{ 'online' if value_json.confidence > 50 else 'offline' }}"
+    json_attributes_topic: "frigate/kiln/temperature/current"
+    json_attributes_template: |
+      {
+        "confidence": {{ value_json.confidence }},
+        "timestamp": "{{ value_json.timestamp }}",
+        "unit": "{{ value_json.unit }}"
+      }
+
+  # Kiln Status Sensor
+  - platform: mqtt
+    name: "Kiln Status"
+    state_topic: "frigate/kiln/status/current"
+    value_template: "{{ value_json.status }}"
+    icon: mdi:pottery
+    json_attributes_topic: "frigate/kiln/status/current"
+    json_attributes_template: |
+      {
+        "confidence": {{ value_json.confidence }},
+        "timestamp": "{{ value_json.timestamp }}"
+      }
+
+  # Firing Status Sensor
+  - platform: mqtt
+    name: "Kiln Firing Status"
+    state_topic: "frigate/kiln/status/firing"
+    value_template: "{{ 'Firing' if value_json.firing else 'Not Firing' }}"
+    icon: mdi:fire
+    json_attributes_topic: "frigate/kiln/status/firing"
+    json_attributes_template: |
+      {
+        "firing": {{ value_json.firing | lower }},
+        "start_time": "{{ value_json.start_time }}",
+        "trigger": "{{ value_json.trigger }}"
+      }
+
+  # Error Code Sensor
+  - platform: mqtt
+    name: "Kiln Error Code"
+    state_topic: "frigate/kiln/errors/current"
+    value_template: "{{ value_json.error_code }}"
+    icon: mdi:alert-circle
+    json_attributes_topic: "frigate/kiln/errors/current"
+    json_attributes_template: |
+      {
+        "severity": "{{ value_json.severity }}",
+        "confidence": {{ value_json.confidence }},
+        "timestamp": "{{ value_json.timestamp }}"
+      }
+
+  # Firing Duration Sensor (calculated)
+  - platform: template
+    sensors:
+      kiln_firing_duration:
+        friendly_name: "Firing Duration"
+        value_template: |
+          {% if states('sensor.kiln_firing_status') == 'Firing' %}
+            {% set start_time = state_attr('sensor.kiln_firing_status', 'start_time') %}
+            {% if start_time %}
+              {% set duration = (now() - strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f')).total_seconds() / 60 %}
+              {{ duration | int }}
+            {% endif %}
+          {% else %}
+            0
+          {% endif %}
+        unit_of_measurement: "minutes"
+        icon: mdi:clock-outline
+
+  # Temperature Trend (rate of change)
+  - platform: derivative
+    source: sensor.kiln_temperature
+    name: "Kiln Temperature Trend"
+    unit_time: min
+    time_window: "00:10:00"  # 10 minute window
+
+# Binary Sensors for Status Detection
+binary_sensor:
+  # High Temperature Alert
+  - platform: template
+    sensors:
+      kiln_high_temperature_alert:
+        friendly_name: "High Temperature Alert"
+        value_template: "{{ states('sensor.kiln_temperature') | int > 2000 }}"
+        device_class: heat
+        icon: mdi:thermometer-alert
+
+  # Firing Active
+  - platform: template
+    sensors:
+      kiln_firing_active:
+        friendly_name: "Kiln Firing Active"
+        value_template: "{{ states('sensor.kiln_firing_status') == 'Firing' }}"
+        device_class: heat
+        icon: mdi:fire
+
+  # Error Detected
+  - platform: template
+    sensors:
+      kiln_error_detected:
+        friendly_name: "Kiln Error Detected"
+        value_template: "{{ states('sensor.kiln_error_code') not in ['unknown', '', 'unavailable'] }}"
+        device_class: problem
+        icon: mdi:alert
+
+# Input Numbers for Temperature Thresholds
+input_number:
+  kiln_high_temp_threshold:
+    name: "High Temperature Threshold"
+    min: 1500
+    max: 2500
+    step: 10
+    initial: 2000
+    unit_of_measurement: "°F"
+    icon: mdi:thermometer-high
+
+  kiln_max_firing_duration:
+    name: "Maximum Firing Duration"
+    min: 60
+    max: 1440  # 24 hours
+    step: 30
+    initial: 720  # 12 hours
+    unit_of_measurement: "minutes"
+    icon: mdi:clock-alert
+
+# Utility Meters for Statistics
+utility_meter:
+  daily_firing_time:
+    source: sensor.kiln_firing_duration
+    cycle: daily
+    name: "Daily Firing Time"
+
+  weekly_firing_time:
+    source: sensor.kiln_firing_duration
+    cycle: weekly
+    name: "Weekly Firing Time" 

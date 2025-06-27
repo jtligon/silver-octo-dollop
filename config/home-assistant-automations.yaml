@@ -1,0 +1,193 @@
+# Home Assistant Automations for Kiln Monitoring
+# Add these to your automations.yaml or create them via the UI
+
+# Temperature Threshold Alerts
+- id: kiln_high_temperature_alert
+  alias: "Kiln High Temperature Alert"
+  description: "Alert when kiln temperature exceeds threshold"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.kiln_temperature
+      above: input_number.kiln_high_temp_threshold
+      for:
+        minutes: 2
+  condition:
+    - condition: state
+      entity_id: binary_sensor.kiln_firing_active
+      state: "on"
+  action:
+    - service: notify.mobile_app_your_phone  # Replace with your device
+      data:
+        title: "🔥 Kiln High Temperature Alert"
+        message: "Kiln temperature is {{ states('sensor.kiln_temperature') }}°F - above threshold of {{ states('input_number.kiln_high_temp_threshold') }}°F"
+        data:
+          priority: high
+          tag: kiln_high_temp
+          actions:
+            - action: "view_kiln_dashboard"
+              title: "View Dashboard"
+    - service: persistent_notification.create
+      data:
+        title: "Kiln High Temperature"
+        message: "Temperature: {{ states('sensor.kiln_temperature') }}°F"
+        notification_id: kiln_high_temp
+
+# Unexpected Cooling Alert
+- id: kiln_unexpected_cooling_alert
+  alias: "Kiln Unexpected Cooling Alert"
+  description: "Alert when temperature drops rapidly during firing"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.kiln_temperature_trend
+      below: -50  # More than 50°F drop per minute
+      for:
+        minutes: 5
+  condition:
+    - condition: state
+      entity_id: binary_sensor.kiln_firing_active
+      state: "on"
+    - condition: numeric_state
+      entity_id: sensor.kiln_temperature
+      above: 500  # Only alert if temp is still high
+  action:
+    - service: notify.mobile_app_your_phone
+      data:
+        title: "❄️ Kiln Cooling Alert"
+        message: "Kiln cooling rapidly: {{ states('sensor.kiln_temperature_trend') }}°F/min. Current temp: {{ states('sensor.kiln_temperature') }}°F"
+        data:
+          priority: high
+          tag: kiln_cooling
+    - service: persistent_notification.create
+      data:
+        title: "Kiln Unexpected Cooling"
+        message: "Rate: {{ states('sensor.kiln_temperature_trend') }}°F/min"
+        notification_id: kiln_cooling
+
+# Firing Completion Detection
+- id: kiln_firing_completion_alert
+  alias: "Kiln Firing Completion Alert"
+  description: "Detect and alert when firing is complete"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.kiln_temperature
+      below: 200
+      for:
+        minutes: 30
+  condition:
+    - condition: state
+      entity_id: binary_sensor.kiln_firing_active
+      state: "on"
+    - condition: template
+      value_template: "{{ states('sensor.kiln_firing_duration') | int > 60 }}"  # Must have been firing for at least 1 hour
+  action:
+    - service: notify.mobile_app_your_phone
+      data:
+        title: "✅ Kiln Firing Complete"
+        message: "Firing completed after {{ states('sensor.kiln_firing_duration') }} minutes. Temperature: {{ states('sensor.kiln_temperature') }}°F"
+        data:
+          priority: normal
+          tag: kiln_complete
+          actions:
+            - action: "view_kiln_dashboard"
+              title: "View Dashboard"
+    - service: persistent_notification.create
+      data:
+        title: "Firing Complete"
+        message: "Duration: {{ states('sensor.kiln_firing_duration') }} minutes"
+        notification_id: kiln_complete
+    # Reset firing status
+    - service: mqtt.publish
+      data:
+        topic: "frigate/kiln/status/firing"
+        payload: '{"firing": false, "end_time": "{{ now().isoformat() }}", "trigger": "temperature_cooling"}'
+
+# Error Code Detection
+- id: kiln_error_code_alert
+  alias: "Kiln Error Code Alert"
+  description: "Alert immediately when error codes are detected"
+  trigger:
+    - platform: state
+      entity_id: sensor.kiln_error_code
+      not_from:
+        - "unknown"
+        - "unavailable"
+        - ""
+      not_to:
+        - "unknown"
+        - "unavailable"
+        - ""
+  action:
+    - service: notify.mobile_app_your_phone
+      data:
+        title: "🚨 Kiln Error Detected"
+        message: "Error Code: {{ states('sensor.kiln_error_code') }}"
+        data:
+          priority: critical
+          tag: kiln_error
+          color: red
+          actions:
+            - action: "view_kiln_dashboard"
+              title: "View Dashboard"
+            - action: "silence_error"
+              title: "Acknowledge"
+    - service: persistent_notification.create
+      data:
+        title: "Kiln Error"
+        message: "Code: {{ states('sensor.kiln_error_code') }}"
+        notification_id: kiln_error
+
+# Long Firing Duration Alert
+- id: kiln_long_firing_alert
+  alias: "Kiln Long Firing Duration Alert"
+  description: "Alert when firing duration exceeds maximum threshold"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.kiln_firing_duration
+      above: input_number.kiln_max_firing_duration
+  condition:
+    - condition: state
+      entity_id: binary_sensor.kiln_firing_active
+      state: "on"
+  action:
+    - service: notify.mobile_app_your_phone
+      data:
+        title: "⏰ Long Firing Alert"
+        message: "Firing has been running for {{ states('sensor.kiln_firing_duration') }} minutes ({{ (states('sensor.kiln_firing_duration') | int / 60) | round(1) }} hours)"
+        data:
+          priority: normal
+          tag: kiln_long_firing
+
+# Daily Firing Summary
+- id: kiln_daily_summary
+  alias: "Kiln Daily Firing Summary"
+  description: "Daily summary of kiln activity"
+  trigger:
+    - platform: time
+      at: "22:00:00"  # 10 PM
+  action:
+    - service: notify.mobile_app_your_phone
+      data:
+        title: "📊 Daily Kiln Summary"
+        message: |
+          Today's firing time: {{ states('sensor.daily_firing_time') }} minutes
+          Current temperature: {{ states('sensor.kiln_temperature') }}°F
+          Status: {{ states('sensor.kiln_status') }}
+        data:
+          tag: kiln_daily_summary
+
+# Frigate Integration Health Check
+- id: frigate_kiln_health_check
+  alias: "Frigate Kiln Health Check"
+  description: "Monitor Frigate OCR system health"
+  trigger:
+    - platform: time_pattern
+      minutes: "/15"  # Every 15 minutes
+  condition:
+    - condition: template
+      value_template: "{{ (now() - states.sensor.kiln_temperature.last_updated).total_seconds() > 900 }}"  # No update in 15 minutes
+  action:
+    - service: persistent_notification.create
+      data:
+        title: "Kiln Monitoring System Issue"
+        message: "No temperature readings for 15+ minutes. Check Frigate OCR system."
+        notification_id: kiln_system_health 
