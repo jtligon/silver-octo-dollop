@@ -109,13 +109,17 @@ Replace MotionEye with Frigate for advanced kiln monitoring with OCR capabilitie
 - [ ] Review and implement network segmentation
 
 ### 10. System Integration
-- [ ] Update systemd services configuration for new containers
-- [ ] Modify container auto-update policies
-- [ ] Configure log rotation for Frigate
-- [ ] Configure log rotation for Home Assistant
-- [ ] Configure log rotation for MQTT broker
-- [ ] Update Cockpit integration for new containers
-- [ ] Test systemd service startup order
+- [x] Update systemd services configuration for new containers
+- [x] Configure service dependencies and startup order
+- [x] Modify container auto-update policies
+- [x] Configure log rotation for Frigate
+- [x] Configure log rotation for MQTT broker
+- [x] Configure log rotation for OCR processor
+- [x] Update Cockpit integration for new containers
+- [x] Create comprehensive health monitoring scripts
+- [x] Set up service restart and management tools
+- [x] Configure journald for container logging
+- [x] Test systemd service startup order
 
 ### 11. Testing & Validation
 - [ ] Test OCR accuracy with actual kiln display
