@@ -6,10 +6,14 @@ After=frigate.service mosquitto.service
 Image=python:3.11-slim
 Volume=/frigate/media:/frigate/media:Z
 Volume=/kiln-ocr:/app:Z
+Volume=/var/lib/kiln-monitoring/kiln-data:/data:Z
+Volume=/var/lib/kiln-monitoring/logs/ocr-processor:/logs:Z
 WorkingDirectory=/app
 Environment=PYTHONPATH=/app
 Environment=TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata
-Exec=python3 frigate-ocr-integration.py
+Environment=KILN_DATA_PATH=/data
+Environment=LOG_PATH=/logs
+Exec=/bin/bash -c "python3 temperature-logger.py & python3 frigate-ocr-integration.py"
 Network=host
 
 [Service]

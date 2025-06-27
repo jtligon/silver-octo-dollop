@@ -88,12 +88,15 @@ Replace MotionEye with Frigate for advanced kiln monitoring with OCR capabilitie
 - [ ] Optimize dashboard for mobile viewing
 
 ### 8. Data Storage & Persistence
-- [ ] Configure persistent storage for Frigate recordings and snapshots
-- [ ] Configure persistent storage for Home Assistant database
-- [ ] Set up persistent storage for historical temperature data
-- [ ] Configure data retention policies for recordings
-- [ ] Configure data retention policies for temperature history
-- [ ] Set up automated backup strategies
+- [x] Configure persistent storage for Frigate recordings and snapshots
+- [x] Set up persistent storage for historical temperature data
+- [x] Configure data retention policies for recordings
+- [x] Configure data retention policies for temperature history
+- [x] Set up automated backup strategies (daily/weekly/monthly)
+- [x] Create database system for structured temperature data
+- [x] Build automated cleanup scripts with configurable retention
+- [x] Create systemd services for backup and cleanup automation
+- [x] Add storage verification and monitoring scripts
 - [ ] Test data persistence across container restarts
 
 ### 9. Network & Security

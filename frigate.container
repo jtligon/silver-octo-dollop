@@ -6,6 +6,7 @@ After=local-fs.target
 Image=ghcr.io/blakeblackshear/frigate:stable
 Volume=/frigate/config:/config:Z
 Volume=/frigate/media:/media:Z
+Volume=/var/lib/kiln-monitoring/frigate:/data:Z
 AddDevice=/dev/video0
 AddDevice=/dev/dri
 PublishPort=5000:5000

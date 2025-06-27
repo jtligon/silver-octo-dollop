@@ -69,10 +69,15 @@ COPY ./mosquitto.conf /mosquitto/config/mosquitto.conf
 # OCR processing scripts and dependencies
 COPY ./ocr-processor.py /kiln-ocr/ocr_processor.py
 COPY ./frigate-ocr-integration.py /kiln-ocr/frigate-ocr-integration.py
+COPY ./temperature-logger.py /kiln-ocr/temperature-logger.py
 COPY ./requirements.txt /kiln-ocr/requirements.txt
 
 # Install Python dependencies for OCR processing
 RUN pip3 install -r /kiln-ocr/requirements.txt
+
+# Install storage setup script and data management tools
+COPY ./storage-setup.sh /usr/local/bin/storage-setup.sh
+RUN chmod +x /usr/local/bin/storage-setup.sh
 
 # Install SSH key import service for automatic passwordless SSH access
 # This one-shot service downloads the user's SSH public key from GitHub on first boot
