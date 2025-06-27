@@ -454,3 +454,130 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - **Home Assistant** community for automation platform
 - **Mosquitto** for reliable MQTT messaging
 - **Fedora bootc** for immutable OS foundation
+
+# Testing
+
+## Pre-Deployment Testing
+
+Before deploying to your Fitlet2 device, thoroughly test the system using the provided testing scripts:
+
+### 🧪 Comprehensive Test Suite
+
+Run the full test suite to validate all components:
+
+```bash
+# Run complete test suite
+./scripts/test-ocr-container.sh
+
+# Quick build-only test
+./scripts/test-ocr-container.sh --build-only
+
+# Essential tests only
+./scripts/test-ocr-container.sh --quick
+```
+
+The test suite includes:
+- **Container Build Test**: Validates OCR container builds successfully
+- **Dependency Test**: Verifies all Python packages and Tesseract are available
+- **OCR Functionality Test**: Tests text recognition with sample images
+- **Health Check Test**: Validates container health monitoring
+- **Systemd Config Test**: Verifies service configuration syntax
+- **Frigate Integration Test**: Tests API connectivity with mock Frigate
+- **Performance Test**: Measures startup time and memory usage
+
+### 🔧 Development Testing
+
+For iterative development and debugging:
+
+```bash
+# Setup development environment (first time)
+./scripts/test-local-development.sh setup
+
+# Quick build test during development
+./scripts/test-local-development.sh build
+
+# Interactive shell for debugging
+./scripts/test-local-development.sh shell
+
+# Test OCR on sample images
+./scripts/test-local-development.sh test-ocr
+
+# Live development with auto-rebuild
+./scripts/test-local-development.sh live
+
+# Performance profiling
+./scripts/test-local-development.sh profile
+```
+
+### 🐛 Debugging OCR Issues
+
+If OCR is not working correctly:
+
+1. **Test with sample images**:
+   ```bash
+   ./scripts/test-local-development.sh test-ocr
+   ```
+
+2. **Interactive debugging**:
+   ```bash
+   ./scripts/test-local-development.sh shell
+   # In container:
+   python3 -c "import cv2, pytesseract; print('Dependencies OK')"
+   tesseract --version
+   ```
+
+3. **Check OCR configuration**:
+   ```bash
+   # Test different OCR modes
+   tesseract image.png stdout --oem 3 --psm 8
+   tesseract image.png stdout --oem 3 --psm 7
+   ```
+
+### 🔄 Local Integration Testing
+
+Test the complete system locally before deployment:
+
+```bash
+# 1. Build all containers
+podman build -f containerfiles/kiln-ocr.Containerfile -t kiln-ocr:test .
+
+# 2. Start mock services
+docker run -d --name frigate-mock -p 5000:5000 minimal-frigate-mock
+docker run -d --name mqtt-mock -p 1883:1883 eclipse-mosquitto
+
+# 3. Test OCR integration
+podman run --rm --network host kiln-ocr:test python3 frigate-ocr-integration.py --test
+
+# 4. Cleanup
+docker rm -f frigate-mock mqtt-mock
+```
+
+### ✅ Pre-Deployment Checklist
+
+Before deploying to production:
+
+- [ ] **All tests pass**: `./scripts/test-ocr-container.sh`
+- [ ] **OCR accuracy verified**: Test with your specific kiln display images
+- [ ] **Container builds successfully**: No build errors or warnings
+- [ ] **Dependencies available**: All Python packages and Tesseract working
+- [ ] **Health checks pass**: Container monitoring functional
+- [ ] **Performance acceptable**: Startup time < 10s, memory usage reasonable
+- [ ] **Network connectivity**: Can reach Frigate and MQTT services
+- [ ] **File permissions correct**: Scripts executable, configs readable
+
+### 🚀 Production Deployment
+
+Once all tests pass:
+
+1. **Build and push container image**:
+   ```bash
+   podman build -f containerfiles/kiln-ocr.Containerfile -t quay.io/jtligon/kiln-ocr:latest .
+   podman push quay.io/jtligon/kiln-ocr:latest
+   ```
+
+2. **Build bootc image**:
+   ```bash
+   podman build -f containerfiles/fitlet.Containerfile -t fitlet2-kiln:latest .
+   ```
+
+3. **Deploy to Fitlet2** using your preferred method (bootc, Anaconda, etc.)
