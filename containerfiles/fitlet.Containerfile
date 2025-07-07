@@ -1,6 +1,6 @@
-# Base image: Fedora bootc (bootable container) version 42 for x86_64 architecture
+# Base image: Fedora bootc (bootable container) version 41 for x86_64 architecture
 # This provides a minimal, immutable OS foundation designed for containerized workloads
-FROM quay.io/fedora/fedora-bootc:42-x86_64
+FROM quay.io/fedora/fedora-bootc:41-x86_64
 
 # Install essential packages for system management and wireless connectivity
 # - cockpit*: Web-based server management interface and its modules
@@ -21,6 +21,10 @@ FROM quay.io/fedora/fedora-bootc:42-x86_64
 # - mesa-dri-drivers: Mesa DRI drivers for GPU acceleration
 # Clean package cache to reduce image size
 RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws openssh-server openssh-clients wpa_supplicant cockpit-selinux iwlwifi-mvm-firmware git wget intel-media-driver libva-intel-driver mesa-dri-drivers && dnf clean all
+
+# Ensure ostree bootloader configuration is present
+RUN mkdir -p /usr/lib/ostree && \
+    echo 'ostree_prepare_root_enabled=1' > /usr/lib/ostree/prepare-root.conf
 
 # Configure passwordless sudo for wheel group members
 # This allows users in the wheel group to run sudo commands without entering a password
