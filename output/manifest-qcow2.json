@@ -12,8 +12,8 @@
               "type": "org.osbuild.containers-storage",
               "origin": "org.osbuild.source",
               "references": {
-                "sha256:e18583cb4c04dee78dc22cd1550d291e28d75bffb2626ae8a4ae1868f97155a2": {
-                  "name": "quay.io/jtligon/fitlet:latest"
+                "sha256:eae5b7235da1e7632077f0e64aebd6623ab2158c0f727788cb84305ded062982": {
+                  "name": "quay.io/jtligon/fitlet2-kiln:latest"
                 }
               }
             }
@@ -113,7 +113,7 @@
         {
           "type": "org.osbuild.mkfs.ext4",
           "options": {
-            "uuid": "8137e91d-193a-41ba-8255-648c2f439193",
+            "uuid": "278b43ea-ed6f-4dae-a209-b0a0602bc6c2",
             "label": "boot"
           },
           "devices": {
@@ -131,7 +131,7 @@
         {
           "type": "org.osbuild.mkfs.ext4",
           "options": {
-            "uuid": "89852205-f3e2-4ecf-8da3-d72092507d4e",
+            "uuid": "e4e73eab-5b3d-476f-914e-38f411432c39",
             "label": "root",
             "verity": true
           },
@@ -154,8 +154,8 @@
               "type": "org.osbuild.containers-storage",
               "origin": "org.osbuild.source",
               "references": {
-                "sha256:e18583cb4c04dee78dc22cd1550d291e28d75bffb2626ae8a4ae1868f97155a2": {
-                  "name": "quay.io/jtligon/fitlet:latest"
+                "sha256:eae5b7235da1e7632077f0e64aebd6623ab2158c0f727788cb84305ded062982": {
+                  "name": "quay.io/jtligon/fitlet2-kiln:latest"
                 }
               }
             }
@@ -166,7 +166,7 @@
               "console=tty0",
               "console=ttyS0"
             ],
-            "target-imgref": "quay.io/jtligon/fitlet:latest"
+            "target-imgref": "quay.io/jtligon/fitlet2-kiln:latest"
           },
           "devices": {
             "disk": {
@@ -211,7 +211,7 @@
                 "DefaultDependencies": true
               },
               "Mount": {
-                "What": "/dev/disk/by-uuid/89852205-f3e2-4ecf-8da3-d72092507d4e",
+                "What": "/dev/disk/by-uuid/e4e73eab-5b3d-476f-914e-38f411432c39",
                 "Where": "/",
                 "Type": "ext4",
                 "Options": "ro"
@@ -357,7 +357,7 @@
                 "DefaultDependencies": true
               },
               "Mount": {
-                "What": "/dev/disk/by-uuid/8137e91d-193a-41ba-8255-648c2f439193",
+                "What": "/dev/disk/by-uuid/278b43ea-ed6f-4dae-a209-b0a0602bc6c2",
                 "Where": "/boot",
                 "Type": "ext4",
                 "Options": "ro"
@@ -706,7 +706,7 @@
   "sources": {
     "org.osbuild.containers-storage": {
       "items": {
-        "sha256:e18583cb4c04dee78dc22cd1550d291e28d75bffb2626ae8a4ae1868f97155a2": {}
+        "sha256:eae5b7235da1e7632077f0e64aebd6623ab2158c0f727788cb84305ded062982": {}
       }
     }
   }

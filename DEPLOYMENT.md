@@ -210,7 +210,7 @@ curl http://192.168.7.200:5000/api/stats
 
 ### **Step 3: Configure Dashboards**
 Home Assistant configuration files are pre-installed:
-- `/frigate/config/config.yml` - Frigate configuration
+- `/var/lib/kiln-monitoring/frigate-config/config.yml` - Frigate configuration
 - Dashboards configured for kiln monitoring
 
 ---
@@ -263,14 +263,14 @@ sudo /usr/local/bin/storage-setup.sh --reset
 ## 📝 **Configuration Files**
 
 ### **Key Configuration Locations**
-- **Frigate Config**: `/frigate/config/config.yml`
-- **MQTT Config**: `/mosquitto/config/mosquitto.conf`
+- **Frigate Config**: `/var/lib/kiln-monitoring/frigate-config/config.yml`
+- **MQTT Config**: `/var/lib/kiln-monitoring/mosquitto-config/mosquitto.conf`
 - **SSL Certificates**: `/etc/ssl/kiln-monitoring/`
 - **Systemd Services**: `/etc/containers/systemd/*.container`
 
 ### **Data Directories**
-- **Frigate Media**: `/frigate/media/`
-- **MQTT Data**: `/mosquitto/data/`
+- **Frigate Media**: `/var/lib/kiln-monitoring/frigate-media/`
+- **MQTT Data**: `/var/lib/kiln-monitoring/mosquitto/data/`
 - **OCR Logs**: `/kiln-ocr/logs/`
 - **Backup Data**: `/data/backups/`
 

@@ -77,7 +77,7 @@ class FrigateOCRIntegration:
 
     def save_debug_images(self, full_image: np.ndarray, zone_images: dict):
         """Save debug images for troubleshooting OCR zones"""
-        debug_dir = "/frigate/media/debug"
+        debug_dir = "/var/lib/kiln-monitoring/frigate-media/debug"
         os.makedirs(debug_dir, exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -172,11 +172,11 @@ class FrigateOCRIntegration:
             return
         
         # Save calibration image
-        cv2.imwrite("/frigate/media/calibration_image.jpg", image)
+        cv2.imwrite("/var/lib/kiln-monitoring/frigate-media/calibration_image.jpg", image)
         
         print("\nZone Calibration Mode")
         print("="*50)
-        print(f"Calibration image saved to: /frigate/media/calibration_image.jpg")
+        print(f"Calibration image saved to: /var/lib/kiln-monitoring/frigate-media/calibration_image.jpg")
         print(f"Current zones:")
         
         for zone_name, coords in self.zones.items():
@@ -184,7 +184,7 @@ class FrigateOCRIntegration:
             
             # Extract and save zone
             zone_img = self.extract_zone_from_image(image, coords)
-            zone_path = f"/frigate/media/zone_{zone_name}.jpg"
+            zone_path = f"/var/lib/kiln-monitoring/frigate-media/zone_{zone_name}.jpg"
             cv2.imwrite(zone_path, zone_img)
             print(f"    Zone image: {zone_path}")
         

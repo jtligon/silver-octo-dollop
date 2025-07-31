@@ -4,7 +4,7 @@ After=local-fs.target
 
 [Container]
 Image=eclipse-mosquitto:latest
-Volume=/mosquitto/config:/mosquitto/config:Z
+Volume=/var/lib/kiln-monitoring/mosquitto-config:/mosquitto/config:Z
 Volume=/var/lib/kiln-monitoring/mosquitto/data:/mosquitto/data:Z
 Volume=/var/lib/kiln-monitoring/mosquitto/log:/mosquitto/log:Z
 PublishPort=1883:1883

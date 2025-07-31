@@ -32,7 +32,7 @@ fi
 log "🔐 Setting up MQTT authentication for Kiln Monitoring System"
 
 # Configuration
-MQTT_CONFIG_DIR="/mosquitto/config"
+MQTT_CONFIG_DIR="/var/lib/kiln-monitoring/mosquitto-config"
 MQTT_AUTH_DIR="$MQTT_CONFIG_DIR/auth"
 MQTT_SSL_DIR="$MQTT_CONFIG_DIR/ssl"
 
@@ -238,7 +238,7 @@ cat > /usr/local/bin/test-mqtt-auth.sh << 'EOF'
 #!/bin/bash
 # Test MQTT authentication and authorization
 
-MQTT_CONFIG_DIR="/mosquitto/config"
+MQTT_CONFIG_DIR="/var/lib/kiln-monitoring/mosquitto-config"
 
 echo "=== MQTT Authentication Test ==="
 echo "Date: $(date)"

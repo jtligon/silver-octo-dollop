@@ -35,15 +35,15 @@ sudo /usr/local/bin/kiln-health-check.sh
 systemctl status mosquitto.service
 
 # Check configuration syntax
-mosquitto -c /mosquitto/config/mosquitto.conf -t
+mosquitto -c /var/lib/kiln-monitoring/mosquitto-config/mosquitto.conf -t
 
 # Check permissions
-ls -la /mosquitto/config/
+ls -la /var/lib/kiln-monitoring/mosquitto-config/
 ls -la /var/lib/kiln-monitoring/mosquitto/
 
 # Reset permissions
 sudo chown -R 1883:1883 /var/lib/kiln-monitoring/mosquitto/
-sudo chown -R 1883:1883 /mosquitto/config/auth/
+sudo chown -R 1883:1883 /var/lib/kiln-monitoring/mosquitto-config/auth/
 ```
 
 #### Authentication Failures
@@ -52,13 +52,13 @@ sudo chown -R 1883:1883 /mosquitto/config/auth/
 sudo /usr/local/bin/test-mqtt-auth.sh
 
 # Check password file
-sudo cat /mosquitto/config/auth/passwd
+sudo cat /var/lib/kiln-monitoring/mosquitto-config/auth/passwd
 
 # Regenerate passwords
 sudo /usr/local/bin/mqtt-auth-setup.sh
 
 # View current credentials
-sudo cat /mosquitto/config/credentials.txt
+sudo cat /var/lib/kiln-monitoring/mosquitto-config/credentials.txt
 ```
 
 #### Connection Refused
@@ -93,7 +93,7 @@ ffmpeg -f v4l2 -i /dev/video0 -frames:v 1 test.jpg
 ls -la /dev/dri/
 
 # Verify configuration
-python3 -c "import yaml; yaml.safe_load(open('/frigate/config/config.yml'))"
+python3 -c "import yaml; yaml.safe_load(open('/var/lib/kiln-monitoring/frigate-config/config.yml'))"
 ```
 
 #### Camera Not Detected
@@ -123,10 +123,10 @@ podman stats frigate
 htop -p $(pgrep frigate)
 
 # Check hardware acceleration
-grep -i "hwaccel" /frigate/config/config.yml
+grep -i "hwaccel" /var/lib/kiln-monitoring/frigate-config/config.yml
 
 # Reduce recording quality
-sudo nano /frigate/config/config.yml
+sudo nano /var/lib/kiln-monitoring/frigate-config/config.yml
 # Modify: quality: 8 → quality: 6
 ```
 
@@ -136,7 +136,7 @@ sudo nano /frigate/config/config.yml
 df -h /var/lib/kiln-monitoring/frigate/
 
 # Check recording configuration
-grep -A 10 "record:" /frigate/config/config.yml
+grep -A 10 "record:" /var/lib/kiln-monitoring/frigate-config/config.yml
 
 # Check motion detection
 curl http://localhost:5000/api/stats
@@ -175,17 +175,17 @@ python3 temperature-logger.py
 python3 /kiln-ocr/frigate-ocr-integration.py --calibrate
 
 # Check debug images
-ls /frigate/media/debug/
+ls /var/lib/kiln-monitoring/frigate-media/debug/
 ls /var/lib/kiln-monitoring/kiln-data/ocr-debug/
 
 # Test OCR zones
 python3 /kiln-ocr/frigate-ocr-integration.py --test-ocr
 
 # Check zone coordinates
-grep -A 20 "zones:" /frigate/config/config.yml
+grep -A 20 "zones:" /var/lib/kiln-monitoring/frigate-config/config.yml
 
 # Test Tesseract directly
-tesseract /frigate/media/debug/temperature_display_*.jpg stdout
+tesseract /var/lib/kiln-monitoring/frigate-media/debug/temperature_display_*.jpg stdout
 ```
 
 #### Inaccurate Temperature Readings
@@ -194,7 +194,7 @@ tesseract /frigate/media/debug/temperature_display_*.jpg stdout
 grep "confidence" /var/lib/kiln-monitoring/logs/ocr-processor/*.log
 
 # Adjust OCR zone coordinates
-sudo nano /frigate/config/config.yml
+sudo nano /var/lib/kiln-monitoring/frigate-config/config.yml
 # Modify zone coordinates based on calibration images
 
 # Update OCR patterns
@@ -206,7 +206,7 @@ python3 -c "
 from ocr_processor import KilnOCRProcessor
 import cv2
 processor = KilnOCRProcessor()
-image = cv2.imread('/frigate/media/debug/latest.jpg')
+image = cv2.imread('/var/lib/kiln-monitoring/frigate-media/debug/latest.jpg')
 result = processor.process_zone_image(image, 'temperature_display')
 print(result)
 "
@@ -260,7 +260,7 @@ ping 192.168.7.200
 journalctl -u mosquitto.service | grep homeassistant
 
 # Verify credentials
-sudo cat /mosquitto/config/credentials.txt | grep homeassistant
+sudo cat /var/lib/kiln-monitoring/mosquitto-config/credentials.txt | grep homeassistant
 ```
 
 #### SSL/TLS Connection Issues
@@ -453,10 +453,10 @@ iperf3 -s &  # On Fitlet2
 iperf3 -c 192.168.7.200  # From client
 
 # Check video quality settings
-grep -A 5 "quality:" /frigate/config/config.yml
+grep -A 5 "quality:" /var/lib/kiln-monitoring/frigate-config/config.yml
 
 # Reduce video quality
-sudo nano /frigate/config/config.yml
+sudo nano /var/lib/kiln-monitoring/frigate-config/config.yml
 # Modify: quality: 8 → quality: 5
 
 # Check container network
@@ -577,7 +577,7 @@ sudo /usr/local/bin/test-mqtt-auth.sh
 ```
 
 ### Important Files
-- **Configs**: `/frigate/config/`, `/mosquitto/config/`
+- **Configs**: `/var/lib/kiln-monitoring/frigate-config/`, `/var/lib/kiln-monitoring/mosquitto-config/`
 - **Logs**: `/var/lib/kiln-monitoring/logs/`
 - **Data**: `/var/lib/kiln-monitoring/kiln-data/`
 - **Backups**: `/var/backups/kiln-monitoring/`

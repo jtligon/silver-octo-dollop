@@ -1,6 +1,6 @@
-# Base image: Fedora bootc (bootable container) version 41 for x86_64 architecture
+# Base image: Fedora bootc (bootable container) version 42 for x86_64 architecture
 # This provides a minimal, immutable OS foundation designed for containerized workloads
-FROM quay.io/fedora/fedora-bootc:41-x86_64
+FROM quay.io/fedora/fedora-bootc:42-x86_64
 
 # Install essential packages for system management and wireless connectivity
 # - cockpit*: Web-based server management interface and its modules
@@ -32,14 +32,14 @@ RUN mkdir -p /usr/lib/ostree && \
 ADD wheel-passwordless-sudo /etc/sudoers.d/wheel-passwordless-sudo
 
 # Create directory structure for Frigate NVR, MQTT broker, and OCR processing
-# - /frigate/config: Configuration files for Frigate NVR
-# - /frigate/media: Storage for recorded videos and snapshots
-# - /mosquitto/config: MQTT broker configuration
-# - /mosquitto/data: MQTT broker persistent data
-# - /mosquitto/log: MQTT broker logs
+# - /var/lib/kiln-monitoring/frigate-config: Configuration files for Frigate NVR
+# - /var/lib/kiln-monitoring/frigate-media: Storage for recorded videos and snapshots
+# - /var/lib/kiln-monitoring/mosquitto-config: MQTT broker configuration
+# - /var/lib/kiln-monitoring/mosquitto/data: MQTT broker persistent data
+# - /var/lib/kiln-monitoring/mosquitto/log: MQTT broker logs
 # - /kiln-ocr: OCR processing scripts and dependencies
 # - /data: General data directory (may be used for additional storage)
-RUN mkdir -p /frigate/config /frigate/media /mosquitto/config /mosquitto/data /mosquitto/log /kiln-ocr /data
+RUN mkdir -p /var/lib/kiln-monitoring/frigate-config /var/lib/kiln-monitoring/frigate-media /var/lib/kiln-monitoring/mosquitto-config /var/lib/kiln-monitoring/mosquitto/data /var/lib/kiln-monitoring/mosquitto/log /kiln-ocr /data
 
 # Create user account for remote SSH access
 # - Creates user 'jtligon' with home directory
@@ -62,11 +62,11 @@ COPY ./systemd/kiln-ocr.container /etc/containers/systemd/kiln-ocr.container
 
 # Install configuration files for services
 # Frigate configuration for kiln monitoring with OCR zones
-COPY ./config/frigate.yml /frigate/config/config.yml
-COPY ./config/labels.txt /frigate/config/labels.txt
+COPY ./config/frigate.yml /var/lib/kiln-monitoring/frigate-config/config.yml
+COPY ./config/labels.txt /var/lib/kiln-monitoring/frigate-config/labels.txt
 
 # Mosquitto MQTT broker configuration
-COPY ./config/mosquitto.conf /mosquitto/config/mosquitto.conf
+COPY ./config/mosquitto.conf /var/lib/kiln-monitoring/mosquitto-config/mosquitto.conf
 
 # Create OCR data directory (scripts will be in container)
 RUN mkdir -p /kiln-ocr
