@@ -100,3 +100,5 @@ RUN chmod +x /usr/local/bin/testing-validation.sh /usr/local/bin/performance-tes
 # - Enables passwordless SSH access for remote management and automation
 COPY ./systemd/oneShot.unit /etc/systemd/system/ssh-key-import.service
 RUN systemctl enable ssh-key-import.service
+
+RUN bootc container lint
