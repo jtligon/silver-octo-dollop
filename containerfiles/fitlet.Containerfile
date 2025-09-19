@@ -22,20 +22,24 @@ FROM quay.io/fedora/fedora-bootc:42-x86_64
 # Clean package cache to reduce image size
 RUN dnf install -y --skip-unavailable cockpit cockpit-ostree cockpit-podman cockpit-storaged cockpit-ws openssh-server openssh-clients wpa_supplicant cockpit-selinux iwlwifi-mvm-firmware git wget intel-media-driver libva-intel-driver mesa-dri-drivers && dnf clean all
 
+# Ensure ostree bootloader configuration is present
+RUN mkdir -p /usr/lib/ostree && \
+    echo 'ostree_prepare_root_enabled=1' > /usr/lib/ostree/prepare-root.conf
+
 # Configure passwordless sudo for wheel group members
 # This allows users in the wheel group to run sudo commands without entering a password
 # Essential for automated operations and container management
 ADD wheel-passwordless-sudo /etc/sudoers.d/wheel-passwordless-sudo
 
 # Create directory structure for Frigate NVR, MQTT broker, and OCR processing
-# - /frigate/config: Configuration files for Frigate NVR
-# - /frigate/media: Storage for recorded videos and snapshots
-# - /mosquitto/config: MQTT broker configuration
-# - /mosquitto/data: MQTT broker persistent data
-# - /mosquitto/log: MQTT broker logs
+# - /var/lib/kiln-monitoring/frigate-config: Configuration files for Frigate NVR
+# - /var/lib/kiln-monitoring/frigate-media: Storage for recorded videos and snapshots
+# - /var/lib/kiln-monitoring/mosquitto-config: MQTT broker configuration
+# - /var/lib/kiln-monitoring/mosquitto/data: MQTT broker persistent data
+# - /var/lib/kiln-monitoring/mosquitto/log: MQTT broker logs
 # - /kiln-ocr: OCR processing scripts and dependencies
 # - /data: General data directory (may be used for additional storage)
-RUN mkdir -p /frigate/config /frigate/media /mosquitto/config /mosquitto/data /mosquitto/log /kiln-ocr /data
+RUN mkdir -p /var/lib/kiln-monitoring/frigate-config /var/lib/kiln-monitoring/frigate-media /var/lib/kiln-monitoring/mosquitto-config /var/lib/kiln-monitoring/mosquitto/data /var/lib/kiln-monitoring/mosquitto/log /kiln-ocr /data
 
 # Create user account for remote SSH access
 # - Creates user 'jtligon' with home directory
@@ -58,11 +62,11 @@ COPY ./systemd/kiln-ocr.container /etc/containers/systemd/kiln-ocr.container
 
 # Install configuration files for services
 # Frigate configuration for kiln monitoring with OCR zones
-COPY ./config/frigate.yml /frigate/config/config.yml
-COPY ./config/labels.txt /frigate/config/labels.txt
+COPY ./config/frigate.yml /var/lib/kiln-monitoring/frigate-config/config.yml
+COPY ./config/labels.txt /var/lib/kiln-monitoring/frigate-config/labels.txt
 
 # Mosquitto MQTT broker configuration
-COPY ./config/mosquitto.conf /mosquitto/config/mosquitto.conf
+COPY ./config/mosquitto.conf /var/lib/kiln-monitoring/mosquitto-config/mosquitto.conf
 
 # Create OCR data directory (scripts will be in container)
 RUN mkdir -p /kiln-ocr
@@ -96,3 +100,5 @@ RUN chmod +x /usr/local/bin/testing-validation.sh /usr/local/bin/performance-tes
 # - Enables passwordless SSH access for remote management and automation
 COPY ./systemd/oneShot.unit /etc/systemd/system/ssh-key-import.service
 RUN systemctl enable ssh-key-import.service
+
+RUN bootc container lint

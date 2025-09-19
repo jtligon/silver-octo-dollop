@@ -39,7 +39,7 @@ BACKUP_BASE="/var/backups/kiln-monitoring"
 log "Creating storage directories..."
 
 # Main storage directories
-sudo mkdir -p "$STORAGE_BASE"/{frigate,mosquitto,kiln-data,logs}
+sudo mkdir -p "$STORAGE_BASE"/{frigate,frigate-config,frigate-media,mosquitto,mosquitto-config,kiln-data,logs}
 sudo mkdir -p "$BACKUP_BASE"/{daily,weekly,monthly}
 
 # Frigate storage structure
@@ -134,8 +134,8 @@ echo "Starting $BACKUP_TYPE backup at $(date)"
 
 # Backup critical configuration files
 echo "Backing up configurations..."
-cp -r /frigate/config "$BACKUP_DIR"/frigate_config
-cp -r /mosquitto/config "$BACKUP_DIR"/mosquitto_config
+cp -r /var/lib/kiln-monitoring/frigate-config "$BACKUP_DIR"/frigate_config
+cp -r /var/lib/kiln-monitoring/mosquitto-config "$BACKUP_DIR"/mosquitto_config
 cp -r /kiln-ocr "$BACKUP_DIR"/ocr_scripts
 
 # Backup kiln historical data (always important)
@@ -360,14 +360,17 @@ echo "Date: $(date)"
 # Check main directories
 check_directory "$STORAGE_BASE" "Main storage"
 check_directory "$STORAGE_BASE/frigate" "Frigate data"
+check_directory "$STORAGE_BASE/frigate-config" "Frigate configuration"
+check_directory "$STORAGE_BASE/frigate-media" "Frigate media"
 check_directory "$STORAGE_BASE/mosquitto" "MQTT data"
+check_directory "$STORAGE_BASE/mosquitto-config" "MQTT configuration"
 check_directory "$STORAGE_BASE/kiln-data" "Kiln data"
 
 # Check container mount points
-check_directory "/frigate/config" "Frigate config mount"
-check_directory "/frigate/media" "Frigate media mount" 
-check_directory "/mosquitto/config" "MQTT config mount"
-check_directory "/mosquitto/data" "MQTT data mount"
+check_directory "/var/lib/kiln-monitoring/frigate-config" "Frigate config mount"
+check_directory "/var/lib/kiln-monitoring/frigate-media" "Frigate media mount" 
+check_directory "/var/lib/kiln-monitoring/mosquitto-config" "MQTT config mount"
+check_directory "/var/lib/kiln-monitoring/mosquitto/data" "MQTT data mount"
 
 # Check disk space
 echo ""

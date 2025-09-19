@@ -13,7 +13,7 @@ The OCR system monitors three zones on your kiln display:
 
 ### Initial Setup
 
-The default zone coordinates are defined in `/frigate/config/config.yml`:
+The default zone coordinates are defined in `/var/lib/kiln-monitoring/frigate-config/config.yml`:
 
 ```yaml
 zones:
@@ -43,17 +43,17 @@ python3 /kiln-ocr/frigate-ocr-integration.py --calibrate
 ```
 
 This creates:
-- `/frigate/media/calibration_image.jpg` - Full camera view
-- `/frigate/media/zone_*.jpg` - Individual zone extracts
+- `/var/lib/kiln-monitoring/frigate-media/calibration_image.jpg` - Full camera view
+- `/var/lib/kiln-monitoring/frigate-media/zone_*.jpg` - Individual zone extracts
 
 #### 2. Analyze Zone Images
 
 ```bash
 # View the full image
-display /frigate/media/calibration_image.jpg
+display /var/lib/kiln-monitoring/frigate-media/calibration_image.jpg
 
 # Check individual zones
-ls -la /frigate/media/zone_*.jpg
+ls -la /var/lib/kiln-monitoring/frigate-media/zone_*.jpg
 ```
 
 #### 3. Determine Optimal Coordinates
@@ -71,7 +71,7 @@ ls -la /frigate/media/zone_*.jpg
 
 #### 4. Update Zone Coordinates
 
-Edit `/frigate/config/config.yml`:
+Edit `/var/lib/kiln-monitoring/frigate-config/config.yml`:
 
 ```yaml
 zones:
@@ -262,7 +262,7 @@ import cv2
 from ocr_processor import KilnOCRProcessor
 
 processor = KilnOCRProcessor()
-image = cv2.imread('/frigate/media/zone_temperature_display.jpg')
+image = cv2.imread('/var/lib/kiln-monitoring/frigate-media/zone_temperature_display.jpg')
 result = processor.process_zone_image(image, 'temperature_display')
 print('Raw text:', result.get('raw_text'))
 print('Extracted temp:', result.get('temperature'))
@@ -281,12 +281,12 @@ mosquitto_sub -h localhost -p 1883 -u admin -P [password] -t "frigate/kiln/+/+" 
 
 ```bash
 # View debug images with overlays
-ls /frigate/media/debug/full_with_zones_*.jpg
+ls /var/lib/kiln-monitoring/frigate-media/debug/full_with_zones_*.jpg
 
 # Check individual zone extracts
-ls /frigate/media/debug/temperature_display_*.jpg
-ls /frigate/media/debug/status_display_*.jpg
-ls /frigate/media/debug/error_display_*.jpg
+ls /var/lib/kiln-monitoring/frigate-media/debug/temperature_display_*.jpg
+ls /var/lib/kiln-monitoring/frigate-media/debug/status_display_*.jpg
+ls /var/lib/kiln-monitoring/frigate-media/debug/error_display_*.jpg
 ```
 
 ## 🔧 Common Issues and Solutions
@@ -313,7 +313,7 @@ ls /frigate/media/debug/error_display_*.jpg
 
 3. **Test OCR manually**:
    ```bash
-   tesseract /frigate/media/zone_temperature_display.jpg stdout
+   tesseract /var/lib/kiln-monitoring/frigate-media/zone_temperature_display.jpg stdout
    ```
 
 ### Issue: Inaccurate Temperature Reading
@@ -496,8 +496,8 @@ For OCR-specific issues:
 1. **Generate debug package**:
    ```bash
    mkdir /tmp/ocr-debug
-   cp /frigate/media/debug/* /tmp/ocr-debug/
-   cp /frigate/config/config.yml /tmp/ocr-debug/
+   cp /var/lib/kiln-monitoring/frigate-media/debug/* /tmp/ocr-debug/
+cp /var/lib/kiln-monitoring/frigate-config/config.yml /tmp/ocr-debug/
    cp /var/lib/kiln-monitoring/logs/ocr-processor/*.log /tmp/ocr-debug/
    tar -czf /tmp/ocr-debug-$(date +%Y%m%d).tar.gz -C /tmp ocr-debug/
    ```

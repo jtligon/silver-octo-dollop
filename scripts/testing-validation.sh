@@ -101,10 +101,10 @@ fi
 # Test 4: MQTT Authentication Tests
 log "=== MQTT Authentication Tests ==="
 
-if [ -f /mosquitto/config/credentials.txt ]; then
+if [ -f /var/lib/kiln-monitoring/mosquitto-config/credentials.txt ]; then
     # Extract credentials for testing
     ADMIN_USER="admin"
-    ADMIN_PASS=$(grep -A1 "Admin User" /mosquitto/config/credentials.txt | grep "Password:" | cut -d' ' -f2)
+    ADMIN_PASS=$(grep -A1 "Admin User" /var/lib/kiln-monitoring/mosquitto-config/credentials.txt | grep "Password:" | cut -d' ' -f2)
     
     if [ -n "$ADMIN_PASS" ]; then
         run_test "MQTT admin authentication" "mosquitto_pub -h localhost -p 1883 -u $ADMIN_USER -P $ADMIN_PASS -t test/auth -m 'test' -q 1"
@@ -119,13 +119,13 @@ fi
 # Test 5: Storage and File System Tests
 log "=== Storage and File System Tests ==="
 
-run_test "Frigate config directory exists" "[ -d /frigate/config ]"
-run_test "Frigate media directory exists" "[ -d /frigate/media ]"
-run_test "MQTT config directory exists" "[ -d /mosquitto/config ]"
+run_test "Frigate config directory exists" "[ -d /var/lib/kiln-monitoring/frigate-config ]"
+run_test "Frigate media directory exists" "[ -d /var/lib/kiln-monitoring/frigate-media ]"
+run_test "MQTT config directory exists" "[ -d /var/lib/kiln-monitoring/mosquitto-config ]"
 run_test "Kiln data directory exists" "[ -d /var/lib/kiln-monitoring ]"
 run_test "Backup directory exists" "[ -d /var/backups/kiln-monitoring ]"
 
-run_test "Frigate config writable" "[ -w /frigate/config ]"
+run_test "Frigate config writable" "[ -w /var/lib/kiln-monitoring/frigate-config ]"
 run_test "Kiln data directory writable" "[ -w /var/lib/kiln-monitoring ]"
 
 # Test 6: SSL Certificate Tests
@@ -144,13 +144,13 @@ fi
 # Test 7: Configuration File Tests
 log "=== Configuration File Tests ==="
 
-run_test "Frigate config exists" "[ -f /frigate/config/config.yml ]"
-run_test "Mosquitto config exists" "[ -f /mosquitto/config/mosquitto.conf ]"
+run_test "Frigate config exists" "[ -f /var/lib/kiln-monitoring/frigate-config/config.yml ]"
+run_test "Mosquitto config exists" "[ -f /var/lib/kiln-monitoring/mosquitto-config/mosquitto.conf ]"
 run_test "OCR requirements file exists" "[ -f /kiln-ocr/requirements.txt ]"
 
 # Validate YAML syntax
 if command -v python3 &> /dev/null; then
-    run_test "Frigate config valid YAML" "python3 -c 'import yaml; yaml.safe_load(open(\"/frigate/config/config.yml\"))'"
+    run_test "Frigate config valid YAML" "python3 -c 'import yaml; yaml.safe_load(open(\"/var/lib/kiln-monitoring/frigate-config/config.yml\"))'"
 fi
 
 # Test 8: API Endpoint Tests
@@ -192,7 +192,7 @@ fi
 
 # Check file permissions
 run_test "SSL private keys secured" "[ \$(stat -c %a /ssl/private 2>/dev/null) = '700' ] || [ ! -d /ssl/private ]"
-run_test "MQTT password file secured" "[ \$(stat -c %a /mosquitto/config/auth/passwd 2>/dev/null) = '600' ] || [ ! -f /mosquitto/config/auth/passwd ]"
+run_test "MQTT password file secured" "[ \$(stat -c %a /var/lib/kiln-monitoring/mosquitto-config/auth/passwd 2>/dev/null) = '600' ] || [ ! -f /var/lib/kiln-monitoring/mosquitto-config/auth/passwd ]"
 
 # Test 12: Performance and Resource Tests
 log "=== Performance and Resource Tests ==="

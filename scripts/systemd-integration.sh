@@ -208,6 +208,38 @@ RandomizedDelaySec=3600
 WantedBy=timers.target
 EOF
 
+# Create container cleanup service to prevent temp directory accumulation
+cat > /etc/systemd/system/container-cleanup-kiln.service << 'EOF'
+[Unit]
+Description=Container Cleanup for Kiln Monitoring
+Documentation=https://github.com/jtligon/silver-octo-dollop
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'echo "Running container cleanup..."; \
+    find /var/tmp -name "container_images_storage*" -type d -mtime +0 -exec rm -rf {} \; 2>/dev/null || true; \
+    find /var/tmp -name "libpod_tmp_*" -type d -mtime +0 -exec rm -rf {} \; 2>/dev/null || true; \
+    find /var/tmp -name "buildah*" -type d -mtime +0 -exec rm -rf {} \; 2>/dev/null || true; \
+    podman system prune -f --filter until=24h 2>/dev/null || true; \
+    echo "Container cleanup completed"'
+StandardOutput=journal
+StandardError=journal
+EOF
+
+cat > /etc/systemd/system/container-cleanup-kiln.timer << 'EOF'
+[Unit]
+Description=Container Cleanup Timer for Kiln Monitoring
+Requires=container-cleanup-kiln.service
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=1800
+
+[Install]
+WantedBy=timers.target
+EOF
+
 # Configure journald for better container logging
 log "Configuring journald for container logging..."
 
@@ -451,6 +483,18 @@ if [ -d /var/lib/kiln-monitoring/logs ]; then
     du -sh /var/lib/kiln-monitoring/logs/* 2>/dev/null || echo "No logs found"
 fi
 
+# Check container temp directories (major space consumer)
+echo ""
+echo "Container temp directories:"
+if ls /var/tmp/container_images_storage* >/dev/null 2>&1; then
+    TEMP_COUNT=$(ls -1d /var/tmp/container_images_storage* 2>/dev/null | wc -l)
+    TEMP_SIZE=$(du -sh /var/tmp/container_images_storage* 2>/dev/null | awk '{sum+=$1} END {print sum"M"}' 2>/dev/null || echo "0M")
+    echo "⚠️  $TEMP_COUNT container temp directories using ~$TEMP_SIZE"
+    echo "Run: /usr/local/bin/cleanup-container-temps.sh"
+else
+    echo "✅ No container temp directories found"
+fi
+
 echo ""
 echo "=== Recent Errors ==="
 # Check for recent service failures
@@ -537,6 +581,63 @@ EOF
 
 chmod +x /usr/local/bin/restart-kiln-services.sh
 
+# Create manual container cleanup script
+log "Creating manual container cleanup script..."
+
+cat > /usr/local/bin/cleanup-container-temps.sh << 'EOF'
+#!/bin/bash
+# Manual Container Temporary Directory Cleanup
+# Prevents the accumulation of container_images_storage* directories that can consume 15GB+
+
+echo "🧹 Container Temporary Directory Cleanup"
+echo "Date: $(date)"
+echo ""
+
+# Check current disk usage
+echo "Current disk usage:"
+df -h / | grep -E "(Filesystem|/)"
+echo ""
+
+# Check temp directory sizes before cleanup
+echo "Container temp directories before cleanup:"
+if ls /var/tmp/container_images_storage* >/dev/null 2>&1; then
+    du -sh /var/tmp/container_images_storage* 2>/dev/null | head -10
+    TEMP_COUNT=$(ls -1d /var/tmp/container_images_storage* 2>/dev/null | wc -l)
+    echo "Found $TEMP_COUNT container temp directories"
+else
+    echo "No container temp directories found"
+fi
+echo ""
+
+# Perform cleanup
+echo "Cleaning container temporary directories..."
+find /var/tmp -name "container_images_storage*" -type d -exec rm -rf {} \; 2>/dev/null || true
+find /var/tmp -name "libpod_tmp_*" -type d -exec rm -rf {} \; 2>/dev/null || true
+find /var/tmp -name "buildah*" -type d -exec rm -rf {} \; 2>/dev/null || true
+
+# Clean container temp files
+find /var/tmp -name "*container*" -type f -mtime +0 -delete 2>/dev/null || true
+find /var/tmp -name "*podman*" -type f -mtime +0 -delete 2>/dev/null || true
+
+# Clean old containers and images
+echo "Cleaning old containers and images..."
+podman system prune -f --filter until=24h 2>/dev/null || true
+
+echo ""
+echo "Cleanup completed!"
+echo "Final disk usage:"
+df -h / | grep -E "(Filesystem|/)"
+echo ""
+echo "Container temp directories after cleanup:"
+if ls /var/tmp/container_images_storage* >/dev/null 2>&1; then
+    du -sh /var/tmp/container_images_storage* 2>/dev/null | head -5
+else
+    echo "✅ All container temp directories cleaned"
+fi
+EOF
+
+chmod +x /usr/local/bin/cleanup-container-temps.sh
+
 # Enable and configure systemd services
 log "Enabling systemd services and timers..."
 
@@ -555,6 +656,9 @@ systemctl enable kiln-cleanup.timer
 # Enable auto-update timer
 systemctl enable podman-auto-update-kiln.timer
 
+# Enable container cleanup timer
+systemctl enable container-cleanup-kiln.timer
+
 # Enable certificate monitoring
 systemctl enable cert-monitor.timer
 
@@ -562,6 +666,7 @@ systemctl enable cert-monitor.timer
 systemctl start kiln-backup.timer
 systemctl start kiln-cleanup.timer
 systemctl start podman-auto-update-kiln.timer
+systemctl start container-cleanup-kiln.timer
 systemctl start cert-monitor.timer
 
 # Configure service startup order test
@@ -640,6 +745,7 @@ log ""
 log "📊 Management Commands:"
 log "   Health check: /usr/local/bin/kiln-health-check.sh"
 log "   Restart services: /usr/local/bin/restart-kiln-services.sh"
+log "   Container cleanup: /usr/local/bin/cleanup-container-temps.sh"
 log "   Test startup order: /usr/local/bin/test-kiln-startup.sh"
 log ""
 log "🌐 Cockpit Integration:"
@@ -653,6 +759,7 @@ log ""
 log "⏰ Enabled Timers:"
 log "   - kiln-backup.timer (daily backups)"
 log "   - kiln-cleanup.timer (daily cleanup)"
+log "   - container-cleanup-kiln.timer (daily container temp cleanup)"
 log "   - podman-auto-update-kiln.timer (weekly updates)"
 log "   - cert-monitor.timer (weekly certificate check)"
 log ""
